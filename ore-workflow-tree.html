@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>ORE, Oncology Reasoning Engine</title>
 <style>
-  :root{--ink:#0e1622;--muted:#5b6b7a;--faint:#8595a4;--line:#e4e9ef;--bg:#eef1f6;--panel:#fff;--blue:#1f6feb;--green:#15803d;--amber:#b45309;--violet:#6d4aff;--slate:#64748b;--red:#b91c1c;--catch:#6d4aff;--fill-data:#eef4ff;--fill-det:#e7f6ec;--fill-llm:#fdf1e3;--fill-out:#f0ecff;--fill-dec:#fff;--fill-flag:#fcebec;--fill-catch:#f0ecff}
+  :root{--ink:#0e1622;--muted:#5b6b7a;--faint:#8595a4;--line:#e4e9ef;--bg:#eef1f6;--panel:#fff;--blue:#1f6feb;--green:#15803d;--amber:#b45309;--violet:#6d4aff;--slate:#64748b;--red:#b91c1c;--catch:#db2777;--fill-data:#eef4ff;--fill-det:#e7f6ec;--fill-llm:#fdf1e3;--fill-out:#f0ecff;--fill-dec:#fff;--fill-flag:#fcebec;--fill-catch:#fce7f3}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
   body{background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
@@ -77,7 +77,7 @@
   #panel .flow .fn.llm{background:var(--fill-llm);border-color:#f0d8ad}
   #panel .flow .fn.out{background:var(--fill-out);border-color:#d8cdf7}
   #panel .flow .fn.flag{background:var(--fill-flag);border-color:#f3c9cd;color:var(--red)}
-  #panel .flow .fn.catch{background:var(--fill-catch);border-color:#cdbef7;color:var(--catch)}
+  #panel .flow .fn.catch{background:var(--fill-catch);border-color:#f4c6df;color:var(--catch)}
   #panel .flow .fn.dec{background:#fff;border-color:var(--slate)}
   #panel .flow .fn.me{box-shadow:0 0 0 2px var(--blue);border-color:var(--blue)}
   #panel .flow .farr{color:var(--faint);text-align:center;font-size:13px;line-height:1;margin:4px 0}
@@ -85,7 +85,7 @@
   #panel .flow .fchip{font-size:11.5px;font-weight:600;border:1px solid var(--line);border-radius:999px;padding:3px 9px;background:#fff;color:#475569}
   #panel .flow .fchip.det{background:var(--fill-det);border-color:#bfe3cb;color:#13702f}
   #panel .flow .fchip.me{border-color:var(--blue);background:#eef4ff;color:#1452c9}
-  #panel .flow .fchip.catch{background:var(--fill-catch);border-color:#cdbef7;color:var(--catch)}
+  #panel .flow .fchip.catch{background:var(--fill-catch);border-color:#f4c6df;color:var(--catch)}
   #panel .flow .fchip.flag{background:var(--fill-flag);border-color:#f3c9cd;color:var(--red)}
   #panel .archline{font-size:13.5px;color:var(--ink);margin:0 0 12px;padding:0 0 12px;border-bottom:1px dashed var(--line)}
   #panel .incase{font-size:13.3px;line-height:1.55}
@@ -101,13 +101,13 @@
     <div class="brand">ORE</div>
     <h1>ORE Workflow Tree</h1>
     <p>The full decision space, left to right, guided. Use the side panel to step through each decision node, it pans, highlights, and shows the detail and citations. Or drag to explore freely.
-    <span class="arch">Every clinical decision and every flag is deterministic and cited (green). A language model is used only to read the record, ground wording in the literature, and write the explanation (amber). It never makes or overrides a decision. <b>Every step in this tree is shown. The model touches only 3 of them (the amber nodes), and none is a decision.</b></span></p>
+    <span class="arch">Every clinical decision and every flag is deterministic and cited (green). A language model is used only to read the record, ground wording in the literature, and write the explanation (amber). It never makes or overrides a decision. <b>All steps are shown. Only the amber ones use a language model, and none of them is a decision.</b></span></p>
   </div>
   <main>
   <div class="context">
     <p class="case"><b>This tree is the ORE architecture; the same steps apply to any cancer type. Example:</b> 62F, invasive ductal carcinoma, cT2N1M0 Stage IIB, ER+/PR+, HER2 IHC 3+, ECOG 1, on trastuzumab plus paclitaxel, DPYD untested, no baseline LVEF.</p>
     <div class="legend">
-      <span><span class="sw dec"></span> decision</span><span><span class="sw det"></span> deterministic</span><span><span class="sw data"></span> data</span><span><span class="sw llm"></span> LLM edge</span><span><span class="sw out"></span> output</span><span><span class="sw flag"></span> gap, safety</span><span><span class="sw catch"></span> engine catch</span>
+      <span><span class="sw dec"></span> decision</span><span><span class="sw det"></span> deterministic</span><span><span class="sw data"></span> data</span><span><span class="sw llm"></span> LLM edge</span><span><span class="sw out"></span> output</span><span><span class="sw flag"></span> gap, safety</span><span><span class="sw catch"></span> engine catch</span><span class="note"><b>Reading the colors:</b> green is the deterministic core, each step a cited rule. Amber is the bounded language-model edge (it reads the record, grounds the evidence, and writes the explanation, never a decision). Blue is data, white diamonds are decision points, purple is an output, red marks a safety gap, and rose marks an engine catch, where ORE improves on the recorded plan.</span>
     </div>
   </div>
 
@@ -275,7 +275,7 @@ classDef llm fill:#fdf1e3,stroke:#b45309,color:#0e1622,stroke-dasharray:4 2;
 classDef out fill:#f0ecff,stroke:#6d4aff,color:#0e1622;
 classDef dec fill:#ffffff,stroke:#64748b,color:#0e1622;
 classDef flag fill:#fcebec,stroke:#b91c1c,color:#0e1622,stroke-width:2px;
-classDef catch fill:#f0ecff,stroke:#6d4aff,color:#0e1622;`;
+classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
 
   const steps = [
     { id:'IN', title:'1. Patient data in', html:'ClearOnc pulls from the EHR (SMART on FHIR, Xealth), an HIE feed, or claims, or accepts a manual upload (PreDoc), then normalizes them to one envelope. <div class="tagrow"><span class="t">touchpoint</span></div>' },
