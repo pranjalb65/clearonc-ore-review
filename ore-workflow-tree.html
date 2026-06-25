@@ -68,6 +68,25 @@
   @media (prefers-reduced-motion: reduce){#diagram svg g.node, .toolbar button, #panel .nav button, #diagram svg.stepping g.node:not(.focus){transition:none !important}}
   footer{margin-top:14px;color:var(--muted);font-size:11.5px;border-top:1px solid var(--line);padding-top:12px}
   footer b{color:var(--ink)}
+  #panel>div[aria-live]{flex:1;display:flex;flex-direction:column;min-height:0}
+  #panel .flow{margin-top:16px;display:flex;flex-direction:column;align-items:stretch}
+  #panel .flow .fn{border:1px solid var(--line);border-radius:10px;padding:8px 11px;font-size:13px;font-weight:600;background:#f7f9fc;color:var(--ink);text-align:center}
+  #panel .flow .fn .fc{display:block;font-weight:400;font-size:11.5px;color:var(--muted);margin-top:2px}
+  #panel .flow .fn.data{background:var(--fill-data);border-color:#bcd3f5}
+  #panel .flow .fn.det{background:var(--fill-det);border-color:#bfe3cb}
+  #panel .flow .fn.llm{background:var(--fill-llm);border-color:#f0d8ad}
+  #panel .flow .fn.out{background:var(--fill-out);border-color:#d8cdf7}
+  #panel .flow .fn.flag{background:var(--fill-flag);border-color:#f3c9cd;color:var(--red)}
+  #panel .flow .fn.catch{background:var(--fill-catch);border-color:#cdbef7;color:var(--catch)}
+  #panel .flow .fn.dec{background:#fff;border-color:var(--slate)}
+  #panel .flow .fn.me{box-shadow:0 0 0 2px var(--blue);border-color:var(--blue)}
+  #panel .flow .farr{color:var(--faint);text-align:center;font-size:13px;line-height:1;margin:4px 0}
+  #panel .flow .fchips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:2px}
+  #panel .flow .fchip{font-size:11.5px;font-weight:600;border:1px solid var(--line);border-radius:999px;padding:3px 9px;background:#fff;color:#475569}
+  #panel .flow .fchip.det{background:var(--fill-det);border-color:#bfe3cb;color:#13702f}
+  #panel .flow .fchip.me{border-color:var(--blue);background:#eef4ff;color:#1452c9}
+  #panel .flow .fchip.catch{background:var(--fill-catch);border-color:#cdbef7;color:var(--catch)}
+  #panel .flow .fchip.flag{background:var(--fill-flag);border-color:#f3c9cd;color:var(--red)}
 </style>
 </head>
 <body>
@@ -273,6 +292,39 @@ classDef catch fill:#f0ecff,stroke:#6d4aff,color:#0e1622;`;
     { id:'SIGN', title:'18. Feedback loop', html:'The physician agree, disagree, or edit response becomes a labeled signal, gated by the eval suite, that improves the next ORE version. Gated, never auto-applied.' },
   ];
 
+    const FLOWS = {
+    IN:[{t:'Records + claims',k:'data'},{t:'Normalized envelope',k:'data',c:'one input contract'}],
+    PARSE:[{t:'Raw record',k:'data'},{t:'LLM extraction',k:'llm',c:'dual pass, cross-checked'},{t:'Typed facts',k:'det',c:'ER+, PR+, HER2 3+, cT2N1M0'}],
+    TERM:[{t:'ICD-10-CM C50.912',k:'data'},{t:'OMOP Maps to',k:'det'},{t:'SNOMED 254837009',k:'det',c:'the reasoning concept'}],
+    BQ:[{t:'HER2 IHC',k:'data'},{t:'Gate on HER2',k:'dec',chips:[{t:'IHC 3+ actionable',k:'det',me:true},{t:'2+ reflex ISH',k:'det'},{t:'0 or 1+ not actionable',k:'det'}]}],
+    EPI:[{t:'Typed facts',k:'det'},{t:'Episode of Care',k:'data',c:'triple-positive, Stage IIB, node-positive'}],
+    SUB:[{t:'Episode',k:'data'},{t:'Subtype router',k:'dec',chips:[{t:'HER2+ (this case)',k:'det',me:true},{t:'HR+ HER2-neg',k:'det'},{t:'HER2-low',k:'det'},{t:'TNBC',k:'det'}]}],
+    FACTORS:[{t:'Factors weighed',k:'det',chips:[{t:'ECOG 1',me:true},{t:'Cardiac, LVEF'},{t:'Organ fn'},{t:'Comorbidity'},{t:'Menopause'},{t:'BRCA'},{t:'Intent'},{t:'Interactions'},{t:'Prior line'}]}],
+    ESC:[{t:'Nodal status',k:'dec',chips:[{t:'Node-positive to dual blockade',k:'det',me:true},{t:'Node-negative to APT',k:'det'}]}],
+    PPREF:[{t:'Neoadjuvant THP or TCHP',k:'det',c:'trastuzumab + pertuzumab + taxane'},{t:'Surgery',k:'det'},{t:'Response-adapted next',k:'dec'}],
+    PADAPT:[{t:'Surgery pathology',k:'dec',chips:[{t:'Residual to T-DM1',k:'det',me:true},{t:'pCR to complete HER2',k:'det'}]},{t:'Plus endocrine therapy (HR+)',k:'det'}],
+    CR2:[{t:'Recorded: trastuzumab + paclitaxel',k:'data',c:'the node-negative APT regimen'},{t:'Dual blockade for N+?',k:'dec'},{t:'ENHANCE: add pertuzumab',k:'catch',me:true,c:'APHINITY, NeoSphere'}],
+    SGAP:[{t:'Trastuzumab',k:'det',c:'cardiotoxic'},{t:'Baseline LVEF on file?',k:'dec'},{t:'Missing',k:'flag',me:true},{t:'Obtain LVEF, then every 3 months',k:'det',c:'FDA boxed warning'}],
+    S3T:[{t:'Fluoropyrimidine planned?',k:'dec',chips:[{t:'Not now, DPYD not gating',k:'det',me:true},{t:'If capecitabine, test DPYD',k:'det'}]}],
+    PUBMED:[{t:'HER2+ evidence',k:'llm',chips:[{t:'APHINITY'},{t:'KATHERINE'},{t:'NeoSphere'},{t:'HERA'},{t:'NSABP'}]},{t:'Grounds wording, never decides',k:'det'}],
+    TRL:[{t:'Phenotype + stage',k:'det'},{t:'Trial match',k:'det',chips:[{t:'NCT07616427 strong',me:true},{t:'NCT05035836'},{t:'NCT07196774'}]}],
+    ORCH:[{t:'PHI de-identified',k:'det'},{t:'LLM explains, grounded',k:'llm'},{t:'Multi-model consensus',k:'det'}],
+    OUT:[{t:'Cited recommendation',k:'out',chips:[{t:'Add pertuzumab'},{t:'Obtain LVEF'},{t:'Plan endocrine'},{t:'Trial option'}]},{t:'Physician and patient views',k:'out'}],
+    SIGN:[{t:'Physician reviews',k:'dec',chips:[{t:'Agree, reinforce',k:'det'},{t:'Edit, correction',k:'det'}]},{t:'Eval gate to next version',k:'det',c:'gated, never auto-applied'}],
+  };
+  function renderFlow(flow){
+    if(!flow||!flow.length) return '';
+    var cap=function(it){return it.c?'<span class="fc">'+it.c+'</span>':'';};
+    var node=function(it){return '<div class="fn '+(it.k||'dec')+(it.me?' me':'')+'">'+it.t+cap(it)+'</div>';};
+    var h='<div class="flow" aria-hidden="true">';
+    flow.forEach(function(it,i){
+      if(i) h+='<div class="farr">&#8595;</div>';
+      if(it.t) h+=node(it);
+      if(it.chips) h+='<div class="fchips">'+it.chips.map(function(c){return '<span class="fchip '+(c.k||'')+(c.me?' me':'')+'">'+c.t+'</span>';}).join('')+'</div>';
+    });
+    return h+'</div>';
+  }
+
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   mermaid.initialize({ startOnLoad:false, theme:'base', themeVariables:{ fontFamily:'-apple-system, Segoe UI, Roboto, sans-serif', fontSize:'14px', lineColor:'#9aa7b6', edgeLabelBackground:'#ffffff' }, flowchart:{ nodeSpacing:42, rankSpacing:66, htmlLabels:true, useMaxWidth:false, curve:'basis', padding:16 } });
@@ -326,7 +378,7 @@ classDef catch fill:#f0ecff,stroke:#6d4aff,color:#0e1622;`;
     const st=steps[cur];
     document.getElementById('pstep').textContent='Step '+(cur+1)+' of '+steps.length;
     document.getElementById('ptitle').textContent=st.title.replace(/^\d+\.\s*/,'');
-    document.getElementById('pbody').innerHTML=st.html;
+    document.getElementById('pbody').innerHTML=st.html+renderFlow(FLOWS[st.id]);
     prev.disabled = cur===0;
     next.disabled = cur===steps.length-1;
     focusNode(st.id);
