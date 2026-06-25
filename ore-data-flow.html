@@ -106,6 +106,8 @@
   .embed #panel{min-height:0}
   .context{padding:11px 16px}
   .legend{grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:8px 14px}
+  #diagram svg .edgeLabel,#diagram svg .edgeLabel foreignObject{overflow:visible}
+  .sw.vchk{width:auto;height:auto;border:none;background:none;color:var(--blue);font-size:13px;font-weight:900}
 </style>
 </head>
 <body>
@@ -121,7 +123,7 @@
   <div class="context">
     <p class="case"><b>The same data and knowledge flow runs for every patient, every cancer type, and every source.</b></p>
     <div class="legend">
-      <span class="li"><span class="lh"><span class="sw dec"></span> decision</span><span class="ld">A branch point, a question the engine evaluates.</span></span><span class="li"><span class="lh"><span class="sw det"></span> deterministic</span><span class="ld">A cited, rule-based outcome. The core of the engine.</span></span><span class="li"><span class="lh"><span class="sw data"></span> data</span><span class="ld">A record or data fact, the input and the Episode.</span></span><span class="li"><span class="lh"><span class="sw llm"></span> LLM edge</span><span class="ld">Live model agents in three roles only: read the record, ground wording in evidence, write the explanation. They never decide.</span></span><span class="li"><span class="lh"><span class="sw out"></span> output</span><span class="ld">What ORE produces: the physician view and the patient summary.</span></span><span class="li"><span class="lh"><span class="sw flag"></span> gap, safety</span><span class="ld">A safety gap or a missing fact that needs action.</span></span><span class="li"><span class="lh"><span class="sw catch"></span> engine catch</span><span class="ld">Where ORE improves on the recorded plan.</span></span>
+      <span class="li"><span class="lh"><span class="sw dec"></span> decision</span><span class="ld">A branch point, a question the engine evaluates.</span></span><span class="li"><span class="lh"><span class="sw det"></span> deterministic</span><span class="ld">A cited, rule-based outcome. The core of the engine.</span></span><span class="li"><span class="lh"><span class="sw data"></span> data</span><span class="ld">A record or data fact, the input and the Episode.</span></span><span class="li"><span class="lh"><span class="sw llm"></span> LLM edge</span><span class="ld">Live model agents in three roles only: read the record, ground wording in evidence, write the explanation. They never decide.</span></span><span class="li"><span class="lh"><span class="sw out"></span> output</span><span class="ld">What ORE produces: the physician view and the patient summary.</span></span><span class="li"><span class="lh"><span class="sw flag"></span> gap, safety</span><span class="ld">A safety gap or a missing fact that needs action.</span></span><span class="li"><span class="lh"><span class="sw catch"></span> engine catch</span><span class="ld">Where ORE improves on the recorded plan.</span></span><span class="li"><span class="lh"><span class="sw vchk">&#10003;</span> validation</span><span class="ld">Each step names the benchmark that validates it, plus a confidence score.</span></span>
     </div>
   </div>
 
@@ -286,6 +288,7 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     const nodes=[...svgEl.querySelectorAll('g.node')];
     return nodes.find(e=>e.id && (e.id==='flowchart-'+id || e.id.startsWith('flowchart-'+id+'-') || e.id.indexOf('-'+id+'-')>-1)) || null;
   }
+  function zoomToNode(n){ try{var sR=document.getElementById('stage').getBoundingClientRect();var nR=n.getBoundingClientRect();if(nR.width>4){var tz=pz.getZoom()*(sR.width*0.32/nR.width);pz.zoom(Math.max(0.2,Math.min(tz,12)));}}catch(e){} }
   function focusNode(id){
     svgEl && svgEl.querySelectorAll('g.node.focus, g.node.rel').forEach(function(e){e.classList.remove('focus');e.classList.remove('rel');});
     if(!pz || !svgEl) return;
@@ -294,7 +297,7 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     (REL[id]||[]).forEach(function(rid){ if(rid!==id){ var rn=findNode(rid); if(rn) rn.classList.add('rel'); } });
     svgEl.classList.add('stepping');
     if(reduce){
-      try{ pz.zoom(2.5); }catch(e){}
+      zoomToNode(n);
       try{
         const s=document.getElementById('stage').getBoundingClientRect();
         const r=n.getBoundingClientRect();
@@ -304,7 +307,7 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
       }catch(e){}
       return;
     }
-    try{ pz.zoom(2.5); }catch(e){}
+    zoomToNode(n);
     requestAnimationFrame(()=>{
       try{
         const s=document.getElementById('stage').getBoundingClientRect();

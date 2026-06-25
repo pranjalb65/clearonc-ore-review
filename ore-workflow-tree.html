@@ -116,6 +116,9 @@
   .embed #panel{min-height:0}
   .context{padding:11px 16px}
   .legend{grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:8px 14px}
+  #diagram svg .node small{font-weight:400;font-size:0.82em;opacity:.66;line-height:1.25}
+  #diagram svg .edgeLabel,#diagram svg .edgeLabel foreignObject{overflow:visible}
+  .sw.vchk{width:auto;height:auto;border:none;background:none;color:var(--blue);font-size:13px;font-weight:900}
 </style>
 </head>
 <body>
@@ -131,7 +134,7 @@
   <div class="context">
     <p class="case"><b>This tree is the ORE architecture; the same steps apply to any cancer type. Example:</b> 62F, invasive ductal carcinoma, cT2N1M0 Stage IIB, ER+/PR+, HER2 IHC 3+, ECOG 1, on trastuzumab plus paclitaxel, DPYD untested, no baseline LVEF.</p>
     <div class="legend">
-      <span class="li"><span class="lh"><span class="sw dec"></span> decision</span><span class="ld">A branch point, a question the engine evaluates.</span></span><span class="li"><span class="lh"><span class="sw det"></span> deterministic</span><span class="ld">A cited, rule-based outcome. The core of the engine.</span></span><span class="li"><span class="lh"><span class="sw data"></span> data</span><span class="ld">A record or data fact, the input and the Episode.</span></span><span class="li"><span class="lh"><span class="sw llm"></span> LLM edge</span><span class="ld">Live model agents in three roles only: read the record, ground wording in evidence, write the explanation. They never decide.</span></span><span class="li"><span class="lh"><span class="sw out"></span> output</span><span class="ld">What ORE produces: the physician view and the patient summary.</span></span><span class="li"><span class="lh"><span class="sw flag"></span> gap, safety</span><span class="ld">A safety gap or a missing fact that needs action.</span></span><span class="li"><span class="lh"><span class="sw catch"></span> engine catch</span><span class="ld">Where ORE improves on the recorded plan.</span></span>
+      <span class="li"><span class="lh"><span class="sw dec"></span> decision</span><span class="ld">A branch point, a question the engine evaluates.</span></span><span class="li"><span class="lh"><span class="sw det"></span> deterministic</span><span class="ld">A cited, rule-based outcome. The core of the engine.</span></span><span class="li"><span class="lh"><span class="sw data"></span> data</span><span class="ld">A record or data fact, the input and the Episode.</span></span><span class="li"><span class="lh"><span class="sw llm"></span> LLM edge</span><span class="ld">Live model agents in three roles only: read the record, ground wording in evidence, write the explanation. They never decide.</span></span><span class="li"><span class="lh"><span class="sw out"></span> output</span><span class="ld">What ORE produces: the physician view and the patient summary.</span></span><span class="li"><span class="lh"><span class="sw flag"></span> gap, safety</span><span class="ld">A safety gap or a missing fact that needs action.</span></span><span class="li"><span class="lh"><span class="sw catch"></span> engine catch</span><span class="ld">Where ORE improves on the recorded plan.</span></span><span class="li"><span class="lh"><span class="sw vchk">&#10003;</span> validation</span><span class="ld">Each step names the benchmark that validates it, plus a confidence score.</span></span>
     </div>
   </div>
 
@@ -164,19 +167,19 @@
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
 
   const graph = `flowchart LR
-IN["Patient data in"]:::data
-PARSE["Parse to typed facts"]:::llm
-TERM["Terminology: ICD to SNOMED"]:::data
-BQ{"HER2 status?"}:::dec
-ISH["IHC 2+: reflex ISH"]:::det
-EPI["Episode of Care"]:::data
-CTAG{"Cancer type"}:::dec
-MOTH["other cancer models"]:::det
-SUB{"Breast subtype"}:::dec
-MBR["Breast HER2+ model"]:::det
-SHR["HR+/HER2-neg model"]:::det
-SHL["HER2-low model"]:::det
-STN["triple-negative model"]:::det
+IN["Data intake<br/><small>EHR, HIE, claims, upload</small>"]:::data
+PARSE["Structured extraction<br/><small>ER+, PR+, HER2 3+</small>"]:::llm
+TERM["Terminology normalize<br/><small>C50.912 to SNOMED</small>"]:::data
+BQ{"Driver biomarker?<br/><small>HER2 status</small>"}:::dec
+ISH["Equivocal to reflex test<br/><small>IHC 2+ to ISH</small>"]:::det
+EPI["Episode of Care<br/><small>triple-positive, Stage IIB</small>"]:::data
+CTAG{"Cancer type<br/><small>breast</small>"}:::dec
+MOTH["Other cancer models<br/><small>NSCLC, CRC, and so on</small>"]:::det
+SUB{"Disease subtype<br/><small>breast, HER2+</small>"}:::dec
+MBR["Subtype model<br/><small>breast HER2+</small>"]:::det
+SHR["Subtype model<br/><small>HR+, HER2-neg</small>"]:::det
+SHL["Subtype model<br/><small>HER2-low</small>"]:::det
+STN["Subtype model<br/><small>triple-negative</small>"]:::det
 IN --> PARSE --> TERM --> BQ
 BQ -- "IHC 3+" --> EPI
 BQ -- "IHC 2+" --> ISH --> EPI
@@ -189,21 +192,21 @@ SUB -- "HR+/HER2-neg" --> SHR
 SUB -- "HER2-low" --> SHL
 SUB -- "TNBC" --> STN
 subgraph FACT["Patient factors weighed"]
-  FACTORS["ECOG, cardiac, organ function,<br/>comorbidity, menopause, BRCA,<br/>intent, interactions, prior line"]:::det
+  FACTORS["Patient factors<br/><small>ECOG 1, cardiac, organ fn, comorbidity</small>"]:::det
 end
 MBR --> FACTORS
 subgraph PLAN["Treatment planning"]
-  INTENT{"Setting and<br/>intent"}:::dec
-  ESC{"Nodal or<br/>risk?"}:::dec
-  PDE["de-escalate: APT"]:::det
-  PPREF["Preferred: dual blockade + taxane to surgery"]:::det
-  PADAPT{"Pathologic<br/>response?"}:::dec
-  PTDM1["residual to T-DM1"]:::det
-  PCOMP["pCR to complete HER2"]:::det
-  PENDO["adjuvant endocrine therapy (HR+)"]:::det
-  LOCO["surgery + radiation"]:::det
-  MDT["tumor board"]:::det
-  SUPP["supportive, palliative"]:::det
+  INTENT{"Setting and intent<br/><small>early-stage, curative</small>"}:::dec
+  ESC{"Nodal or risk?<br/><small>node-positive N1</small>"}:::dec
+  PDE["De-escalate<br/><small>APT, node-negative</small>"]:::det
+  PPREF["Preferred regimen<br/><small>dual blockade + taxane</small>"]:::det
+  PADAPT{"Response-adapted?<br/><small>pathology at surgery</small>"}:::dec
+  PTDM1["Residual disease<br/><small>T-DM1</small>"]:::det
+  PCOMP["pCR path<br/><small>complete HER2</small>"]:::det
+  PENDO["Endocrine therapy<br/><small>AI, HR-positive</small>"]:::det
+  LOCO["Locoregional<br/><small>surgery + radiation</small>"]:::det
+  MDT["Tumor board<br/><small>multidisciplinary</small>"]:::det
+  SUPP["Supportive care<br/><small>palliative</small>"]:::det
   INTENT --> ESC
   ESC -- "node-positive" --> PPREF
   ESC -- "node-negative" --> PDE
@@ -217,15 +220,15 @@ subgraph PLAN["Treatment planning"]
 end
 FACTORS --> INTENT
 subgraph SAFE["Safety screen"]
-  S1{"Cardiotox and<br/>LVEF ok?"}:::dec
-  SGAP["GAP: baseline LVEF missing"]:::flag
-  S2{"Anthracycline<br/>used?"}:::dec
-  S2OK["avoid concurrent"]:::det
-  S3{"Fluoro-<br/>pyrimidine?"}:::dec
-  S3NA["DPYD not gating"]:::det
-  S3T["test DPYD if capecitabine"]:::det
-  S4{"Organ<br/>function ok?"}:::dec
-  S5{"Interactions,<br/>allergies?"}:::dec
+  S1{"Cardiotoxic, LVEF ok?<br/><small>trastuzumab</small>"}:::dec
+  SGAP["Safety gap<br/><small>baseline LVEF missing</small>"]:::flag
+  S2{"Anthracycline used?<br/><small>interaction check</small>"}:::dec
+  S2OK["Avoid combination<br/><small>none recorded</small>"]:::det
+  S3{"Fluoropyrimidine?<br/><small>PGx gate</small>"}:::dec
+  S3NA["Not gating<br/><small>DPYD n/a now</small>"]:::det
+  S3T["Conditional PGx test<br/><small>DPYD if capecitabine</small>"]:::det
+  S4{"Organ function ok?<br/><small>renal, hepatic, marrow</small>"}:::dec
+  S5{"Interactions, allergies?<br/><small>screen</small>"}:::dec
   S1 -- "no LVEF" --> SGAP
   S2 -- none --> S2OK
   S3 -- "no FP" --> S3NA
@@ -234,12 +237,12 @@ end
 FACTORS --> S1
 PPREF --> S1
 subgraph CONC["Concordance"]
-  CR1{"HER2-targeted<br/>present?"}:::dec
-  CC1["CONCORDANT"]:::det
-  CR2{"Dual blockade<br/>for N+?"}:::dec
-  CC2["ENHANCE: add pertuzumab"]:::catch
-  CR3{"Endocrine<br/>for HR+?"}:::dec
-  CC3["PENDING: plan endocrine therapy"]:::det
+  CR1{"Targeted therapy present?<br/><small>trastuzumab</small>"}:::dec
+  CC1["Concordant<br/><small>HER2 therapy given</small>"]:::det
+  CR2{"Dual blockade for N+?<br/><small>pertuzumab</small>"}:::dec
+  CC2["Engine catch<br/><small>add pertuzumab</small>"]:::catch
+  CR3{"Endocrine for HR+?<br/><small>aromatase inhibitor</small>"}:::dec
+  CC3["Pending<br/><small>plan endocrine</small>"]:::det
   CR1 -- yes --> CC1
   CR1 --> CR2
   CR2 -- no --> CC2
@@ -247,25 +250,25 @@ subgraph CONC["Concordance"]
   CR3 -- "not yet" --> CC3
 end
 MBR --> CR1
-QUAL{"Data complete?"}:::dec
-QHI["high confidence"]:::det
-QABS["ABSTAIN + tumor board"]:::flag
-GAPS["Clinical gaps"]:::flag
-TRL["Trial match (recruiting)"]:::det
-TRG["Triage to queue"]:::det
-PUBMED["PubMed grounding"]:::llm
+QUAL{"Data sufficient?<br/><small>documented here</small>"}:::dec
+QHI["High confidence<br/><small>proceed</small>"]:::det
+QABS["Abstain<br/><small>to tumor board</small>"]:::flag
+GAPS["Clinical gaps<br/><small>LVEF, pertuzumab</small>"]:::flag
+TRL["Trial match<br/><small>NCT07616427</small>"]:::det
+TRG["Triage<br/><small>SLA + acuity</small>"]:::det
+PUBMED["Evidence grounding<br/><small>HER2+ trials</small>"]:::llm
 MBR --> QUAL
 QUAL -- yes --> QHI
 QUAL -- thin --> QABS
 MBR --> GAPS
 MBR --> TRL
 MBR --> TRG
-ORCH["Orchestration + consensus"]:::llm
-OUT["Outputs: physician + patient view"]:::out
-SIGN{"Physician signs"}:::dec
-FBP["reinforce"]:::det
-FBE["correction"]:::det
-GATE["eval gate to next version"]:::det
+ORCH["Orchestration<br/><small>multi-model consensus</small>"]:::llm
+OUT["Outputs<br/><small>physician + patient</small>"]:::out
+SIGN{"Physician signs<br/><small>review and edit</small>"}:::dec
+FBP["Reinforce<br/><small>agree</small>"]:::det
+FBE["Correction<br/><small>edit</small>"]:::det
+GATE["Eval gate<br/><small>next version</small>"]:::det
 PPREF --> ORCH
 PTDM1 --> ORCH
 PCOMP --> ORCH
@@ -462,6 +465,7 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     const nodes=[...svgEl.querySelectorAll('g.node')];
     return nodes.find(e=>e.id && (e.id==='flowchart-'+id || e.id.startsWith('flowchart-'+id+'-') || e.id.indexOf('-'+id+'-')>-1)) || null;
   }
+  function zoomToNode(n){ try{var sR=document.getElementById('stage').getBoundingClientRect();var nR=n.getBoundingClientRect();if(nR.width>4){var tz=pz.getZoom()*(sR.width*0.32/nR.width);pz.zoom(Math.max(0.2,Math.min(tz,12)));}}catch(e){} }
   function focusNode(id){
     svgEl && svgEl.querySelectorAll('g.node.focus, g.node.rel').forEach(function(e){e.classList.remove('focus');e.classList.remove('rel');});
     if(!pz || !svgEl) return;
@@ -470,7 +474,7 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     (REL[id]||[]).forEach(function(rid){ if(rid!==id){ var rn=findNode(rid); if(rn) rn.classList.add('rel'); } });
     svgEl.classList.add('stepping');
     if(reduce){
-      try{ pz.zoom(2.5); }catch(e){}
+      zoomToNode(n);
       try{
         const s=document.getElementById('stage').getBoundingClientRect();
         const r=n.getBoundingClientRect();
@@ -480,7 +484,7 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
       }catch(e){}
       return;
     }
-    try{ pz.zoom(2.5); }catch(e){}
+    zoomToNode(n);
     requestAnimationFrame(()=>{
       try{
         const s=document.getElementById('stage').getBoundingClientRect();
