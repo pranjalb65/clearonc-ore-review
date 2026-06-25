@@ -33,6 +33,7 @@
   #diagram svg .node rect,#diagram svg .node polygon,#diagram svg .node path{filter:drop-shadow(0 1px 2px rgba(15,23,32,.12))}
   #diagram svg .node rect{rx:9px;ry:9px}
   #diagram svg .nodeLabel{font-weight:600}
+  #diagram svg .node foreignObject{overflow:visible}
   #diagram svg .edgeLabel{font-weight:600}
   #diagram svg .edgeLabel foreignObject>div{background:#fff;padding:1px 4px;border-radius:4px}
   #diagram svg .cluster rect{rx:15px;ry:15px;fill:#fafcff;stroke:#d8e0ea}
@@ -435,7 +436,7 @@ classDef catch fill:#f0ecff,stroke:#6d4aff,color:#0e1622;`;
     svgEl.addEventListener('click',(e)=>{
       const g=e.target.closest && e.target.closest('g.node');
       if(!g||!g.id) return;
-      let id=g.id.replace(/^flowchart-/,'');
+      let id=g.id.replace(/^.*?flowchart-/,'');
       id=id.replace(/-\d+$/,'');
       if(stepIndex[id]!==undefined){ stopPlay(); show(stepIndex[id]); }
     });
