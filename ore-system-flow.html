@@ -1,0 +1,176 @@
+<title>ORE System Flow</title>
+<style>
+  :root{
+    --ink:#0e1622; --muted:#5b6b7a; --faint:#8595a4; --line:#e4e9ef; --bg:#f5f7fa; --panel:#fff;
+    --blue:#1f6feb; --green:#15803d; --amber:#b45309; --slate:#64748b; --violet:#6d4aff;
+    --softb:#eef4ff; --softg:#e7f6ec; --softa:#fdf1e3; --softs:#eef1f5;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1220px;margin:0 auto;padding:34px 22px 70px}
+  header h1{font-size:27px;margin:0 0 6px;letter-spacing:-.02em}
+  header p{color:var(--muted);margin:0;font-size:15px;max-width:780px}
+  .tag{display:inline-block;font-size:12px;font-weight:600;color:var(--blue);background:var(--softb);border-radius:999px;padding:3px 11px;margin-top:12px}
+  .principle{margin:20px 0 22px;background:var(--ink);color:#fff;border-radius:14px;padding:16px 22px;display:flex;gap:16px;align-items:center;flex-wrap:wrap}
+  .principle b{color:#fff;font-size:15px}.principle span{color:#c9d4df;font-size:13.5px}
+  .principle .pill{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.16);border-radius:8px;padding:4px 10px;font-size:12px;color:#e8eef4;white-space:nowrap}
+
+  /* snake flow */
+  .snake{margin:10px 0 6px}
+  .srow{display:flex;align-items:stretch}
+  .srow.rev{flex-direction:row-reverse}
+  .scard{flex:1 1 0;min-width:0;background:var(--panel);border:1px solid var(--line);border-top:4px solid var(--slate);border-radius:12px;padding:12px 13px;display:flex;flex-direction:column}
+  .scard.blue{border-top-color:var(--blue)} .scard.green{border-top-color:var(--green)}
+  .scard.amber{border-top-color:var(--amber)} .scard.violet{border-top-color:var(--violet)}
+  .scard .hd{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+  .scard .num{flex:none;width:24px;height:24px;border-radius:7px;background:var(--ink);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .scard h3{margin:0;font-size:13.5px;line-height:1.2}
+  .scard p{margin:0 0 7px;color:var(--muted);font-size:12px;line-height:1.45}
+  .scard .chips{display:flex;flex-wrap:wrap;gap:4px;margin-top:auto}
+  .chip{font-size:10.5px;font-weight:600;border-radius:5px;padding:2px 6px;background:var(--softs);color:var(--slate);white-space:nowrap}
+  .chip.live{background:var(--softg);color:var(--green)} .chip.pend{background:var(--softa);color:var(--amber)} .chip.feed{background:var(--softb);color:var(--blue)}
+  .conn{flex:0 0 24px;display:flex;align-items:center;justify-content:center;color:var(--faint);font-size:22px;font-weight:700}
+  .turn{display:flex;color:var(--blue);font-size:13px;font-weight:700;align-items:center;gap:6px;padding:6px 0}
+  .turn .arr{font-size:20px}
+  .turn.right{justify-content:flex-end;padding-right:46px}
+  .turn.left{justify-content:flex-start;padding-left:46px}
+
+  h2{font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin:28px 0 10px;font-weight:700;display:flex;align-items:center;gap:10px}
+  h2::after{content:"";flex:1;height:1px;background:var(--line)}
+  table{width:100%;border-collapse:collapse;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;font-size:13px}
+  th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);background:var(--bg)}
+  tr:last-child td{border-bottom:0}
+  .legend{display:flex;gap:16px;flex-wrap:wrap;margin:14px 0 0;font-size:12.5px}
+  .legend span{display:inline-flex;align-items:center;gap:7px;color:var(--muted)}
+  .sw{width:12px;height:12px;border-radius:3px}
+  .sw.blue{background:var(--blue)}.sw.green{background:var(--green)}.sw.amber{background:var(--amber)}.sw.violet{background:var(--violet)}.sw.slate{background:var(--slate)}
+  footer{margin-top:26px;padding-top:16px;border-top:1px solid var(--line);color:var(--muted);font-size:12.5px}
+  @media (max-width:860px){.srow,.srow.rev{flex-direction:column}.conn{flex-basis:auto;transform:rotate(90deg);padding:3px 0}.turn{display:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>ORE: Oncology Reasoning Engine, end to end</h1>
+    <p>One continuous flow, Step 1 to Step 11, from any product's patient data in to a cited, physician-reviewed result out. ORE is a platform; ClearOnc is its first consumer.</p>
+    <span class="tag">System flow for the Kamal review</span>
+  </header>
+
+  <div class="principle">
+    <b>Deterministic core, probabilistic edges</b>
+    <span>Every clinical decision is an explainable, cited rule over the patient record. The LLM only does language and never makes the call.</span>
+    <span class="pill">Same input, same output</span>
+    <span class="pill">Every claim cited</span>
+    <span class="pill">Physician signs off</span>
+  </div>
+
+  <div class="snake">
+    <!-- Row 1: steps 1 to 4, left to right -->
+    <div class="srow">
+      <div class="scard blue">
+        <div class="hd"><span class="num">1</span><h3>Touchpoints</h3></div>
+        <p>Products send ORE one normalized envelope through a thin adapter.</p>
+        <div class="chips"><span class="chip live">ClearOnc</span><span class="chip">Xealth / SMART on FHIR</span><span class="chip">Oncore</span><span class="chip">future</span></div>
+      </div>
+      <div class="conn">&rsaquo;</div>
+      <div class="scard blue">
+        <div class="hd"><span class="num">2</span><h3>Envelope boundary</h3></div>
+        <p>One versioned clinical envelope plus an SDK. ORE never reads a product's native types.</p>
+        <div class="chips"><span class="chip">envelope v1</span><span class="chip">runtime validated</span></div>
+      </div>
+      <div class="conn">&rsaquo;</div>
+      <div class="scard blue">
+        <div class="hd"><span class="num">3</span><h3>Patient data in</h3></div>
+        <p>Clinical records and claims feed the same model.</p>
+        <div class="chips"><span class="chip live">path, labs, imaging, molecular, notes</span><span class="chip pend">claims (OMOP)</span></div>
+      </div>
+      <div class="conn">&rsaquo;</div>
+      <div class="scard amber">
+        <div class="hd"><span class="num">4</span><h3>Parsing</h3></div>
+        <p>An LLM extracts the record into typed, validated clinical facts.</p>
+        <div class="chips"><span class="chip">Sonnet plus Opus, dual pass</span></div>
+      </div>
+    </div>
+
+    <div class="turn right"><span>continues</span><span class="arr">&darr;</span></div>
+
+    <!-- Row 2: steps 5 to 8, flowing back right to left -->
+    <div class="srow rev">
+      <div class="scard blue">
+        <div class="hd"><span class="num">5</span><h3>Terminology</h3></div>
+        <p>Source codes normalize to one standard concept layer, so US and international partners work the same.</p>
+        <div class="chips"><span class="chip live">ICD-10-CM to SNOMED</span><span class="chip">RxNorm, LOINC, ICD-O-3</span><span class="chip pend">OMOP map</span></div>
+      </div>
+      <div class="conn">&lsaquo;</div>
+      <div class="scard blue">
+        <div class="hd"><span class="num">6</span><h3>Episode of Care</h3></div>
+        <p>The canonical, longitudinal record. Provenance and confidence on every fact.</p>
+        <div class="chips"><span class="chip">diagnosis</span><span class="chip">staging over time</span><span class="chip">biomarkers</span><span class="chip">lines of therapy</span><span class="chip">treatments</span><span class="chip">performance status</span><span class="chip">response</span><span class="chip">labs</span><span class="chip">comorbidity</span></div>
+      </div>
+      <div class="conn">&lsaquo;</div>
+      <div class="scard green">
+        <div class="hd"><span class="num">7</span><h3>Guideline layer</h3></div>
+        <p>Cited free guidelines, each feeding a specific engine.</p>
+        <div class="chips"><span class="chip feed">Pathway pack 5 to Concordance</span><span class="chip feed">CIViC 30 to Concordance</span><span class="chip feed">CPIC PGx 6 to PGx</span><span class="chip feed">DailyMed to AE</span><span class="chip feed">NCI PDQ 5 to LLM</span><span class="chip feed">Trials.gov to Trials</span><span class="chip pend">NCCN pending</span></div>
+      </div>
+      <div class="conn">&lsaquo;</div>
+      <div class="scard green">
+        <div class="hd"><span class="num">8</span><h3>Deterministic engines</h3></div>
+        <p>Explainable, cited rules make every clinical decision.</p>
+        <div class="chips"><span class="chip">Triage + acuity</span><span class="chip">Concordance</span><span class="chip">Lines of therapy</span><span class="chip">AE risk</span><span class="chip">PGx</span><span class="chip">Trial match</span><span class="chip">Quality</span></div>
+      </div>
+    </div>
+
+    <div class="turn left"><span class="arr">&darr;</span><span>continues</span></div>
+
+    <!-- Row 3: steps 9 to 11, left to right -->
+    <div class="srow">
+      <div class="scard violet">
+        <div class="hd"><span class="num">9</span><h3>Orchestration</h3></div>
+        <p>The pipeline composes the engines into one result. A PHI gate de-identifies before any external model; the bounded LLM edge does language only.</p>
+        <div class="chips"><span class="chip">PHI de-id gate</span><span class="chip">multi-model consensus</span><span class="chip">version stamp</span></div>
+      </div>
+      <div class="conn">&rsaquo;</div>
+      <div class="scard violet">
+        <div class="hd"><span class="num">10</span><h3>Outputs</h3></div>
+        <p>A cited physician view and a patient-friendly summary. A clinician reviews and signs.</p>
+        <div class="chips"><span class="chip">physician view</span><span class="chip">patient summary</span><span class="chip">all cited</span></div>
+      </div>
+      <div class="conn">&rsaquo;</div>
+      <div class="scard green">
+        <div class="hd"><span class="num">11</span><h3>Feedback loop</h3></div>
+        <p>Physician agree, disagree, and edit signals improve ORE, gated by the eval suite, never auto-applied.</p>
+        <div class="chips"><span class="chip">eval labels</span><span class="chip">knowledge corrections</span><span class="chip">calibration</span><span class="chip">regression gate</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <span><span class="sw blue"></span> data and boundary</span>
+    <span><span class="sw green"></span> deterministic core</span>
+    <span><span class="sw amber"></span> LLM edge, language only</span>
+    <span><span class="sw violet"></span> orchestration and output</span>
+    <span><span class="sw slate"></span> pending a license or input</span>
+  </div>
+
+  <h2>Guideline routing, at a glance</h2>
+  <div style="overflow-x:auto">
+  <table>
+    <thead><tr><th>Source</th><th>Feeds (step 8)</th><th>For</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>Pathway pack, CIViC</td><td>Concordance engine</td><td>Cited concordant or discordant verdicts on biomarker-driven therapy</td><td><span class="chip live">live</span></td></tr>
+      <tr><td>CPIC PGx</td><td>PGx assessment</td><td>Gene-guided dosing and contraindications</td><td><span class="chip live">live</span></td></tr>
+      <tr><td>DailyMed (FDA labels)</td><td>AE risk, concordance citations</td><td>Indications, contraindications, boxed warnings</td><td><span class="chip live">live</span></td></tr>
+      <tr><td>NCI PDQ</td><td>LLM grounding</td><td>Citable guideline-grade narrative</td><td><span class="chip live">live</span></td></tr>
+      <tr><td>ClinicalTrials.gov</td><td>Trial matching</td><td>Rank open trials by eligibility</td><td><span class="chip live">live</span></td></tr>
+      <tr><td>OMOP vocabulary</td><td>Terminology (step 5)</td><td>Authoritative ICD to SNOMED, international-ready</td><td><span class="chip pend">pending</span></td></tr>
+      <tr><td>NCCN / ASCO / ESMO</td><td>Concordance engine</td><td>Authoritative guideline pathways</td><td><span class="chip pend">pending license</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <footer>
+    Decision support, not a medical device. A licensed physician reviews, edits, and signs every output. Every clinical assertion carries a citation, and model, prompt, and corpus versions are stamped on every result.
+  </footer>
+</div>

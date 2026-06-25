@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>ORE, Oncology Reasoning Engine</title>
+<style>
+  :root{--ink:#0e1622;--muted:#5b6b7a;--faint:#8595a4;--line:#e6eaf0;--bg:#eef1f6;--panel:#fff;--blue:#1f6feb;--green:#15803d;--amber:#b45309;--violet:#6d4aff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1000px;margin:0 auto;padding:34px 20px 70px}
+  .hero{background:linear-gradient(135deg,#11213b,#1f3b73 58%,#2563c9);color:#fff;border-radius:20px;padding:30px 32px;box-shadow:0 12px 36px rgba(20,40,80,.2)}
+  .hero .k{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#9fc1ff}
+  .hero h1{font-size:30px;margin:7px 0 10px;letter-spacing:-.02em}
+  .hero p{margin:0;color:#cfe0f5;font-size:15px;max-width:760px}
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:20px}
+  a.card{display:block;background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px 22px;text-decoration:none;color:inherit;box-shadow:0 2px 12px rgba(20,40,80,.05);transition:transform .12s ease,box-shadow .12s ease}
+  a.card:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(20,40,80,.12)}
+  a.card.full{grid-column:1 / -1}
+  .pill{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;border-radius:999px;padding:3px 10px;margin-bottom:9px}
+  .pill.flag{background:#f0ecff;color:var(--violet)}.pill.b{background:#eef4ff;color:var(--blue)}.pill.g{background:#e7f6ec;color:var(--green)}.pill.a{background:#fdf1e3;color:var(--amber)}
+  a.card h2{font-size:18px;margin:0 0 5px;letter-spacing:-.01em}
+  a.card p{margin:0;color:var(--muted);font-size:13.5px}
+  .arrow{color:var(--blue);font-weight:700;font-size:13px;margin-top:10px;display:inline-block}
+  footer{margin-top:26px;color:var(--muted);font-size:12px;line-height:1.6}
+  @media(max-width:720px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="hero">
+      <div class="k">ClearOnc</div>
+      <h1>ORE, the Oncology Reasoning Engine</h1>
+      <p>A deterministic, cited clinical reasoning engine for oncology, with a bounded LLM edge for language. These pages map how it works and show it end to end on one real case.</p>
+    </div>
+
+    <div class="grid">
+      <a class="card full" href="ore-workflow-tree.html">
+        <span class="pill flag">Start here</span>
+        <h2>Workflow Tree, guided</h2>
+        <p>The full decision space, left to right. Step through every decision node with Prev, Next, and Play, each pans, highlights, and shows the detail and citations. Threaded with the worked case.</p>
+        <span class="arrow">Open the guided tree &rarr;</span>
+      </a>
+      <a class="card" href="ore-case-dossier.html">
+        <span class="pill b">Worked case</span>
+        <h2>Case Dossier</h2>
+        <p>Every ORE layer mapped for one triple-positive, node-positive breast cancer patient: biomarkers, plan, concordance, adverse events, PGx, ranked PubMed evidence, trials, gaps.</p>
+        <span class="arrow">Open the dossier &rarr;</span>
+      </a>
+      <a class="card" href="ore-decision-tree-pro.html">
+        <span class="pill g">Logic</span>
+        <h2>Decision Tree</h2>
+        <p>The deterministic decision logic on its own, navigable, from patient data in to a cited, physician-signed result.</p>
+        <span class="arrow">Open the decision tree &rarr;</span>
+      </a>
+      <a class="card" href="ore-system-flow.html">
+        <span class="pill b">Architecture</span>
+        <h2>System Flow</h2>
+        <p>How each layer connects: the normalized envelope, the deterministic core, the knowledge sources, and the LLM edge.</p>
+        <span class="arrow">Open the system flow &rarr;</span>
+      </a>
+      <a class="card" href="ore-benchmark-comparison.html">
+        <span class="pill a">Landscape</span>
+        <h2>Benchmark Comparison</h2>
+        <p>Where ORE sits against the oncology reasoning benchmarks and competitor engines, and what we learned from each.</p>
+        <span class="arrow">Open the comparison &rarr;</span>
+      </a>
+    </div>
+
+    <footer>
+      Decision support, not a medical device. The worked case is synthetic and illustrative; codes, regimens, PMIDs, and trial ids are verified to demonstrate the engine's logic. A licensed physician reviews and signs every result. Internal review material, please do not redistribute.
+    </footer>
+  </div>
+</body>
+</html>

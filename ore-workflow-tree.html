@@ -1,0 +1,301 @@
+<title>ORE Workflow Tree</title>
+<style>
+  :root{--ink:#0e1622;--muted:#5b6b7a;--faint:#8595a4;--line:#e4e9ef;--bg:#eef1f6;--panel:#fff;--blue:#1f6feb;--green:#15803d;--amber:#b45309;--violet:#6d4aff;--slate:#64748b;--red:#b91c1c}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1480px;margin:0 auto;padding:22px 18px 40px}
+  .hero{background:linear-gradient(135deg,#11213b,#1f3b73 55%,#2563c9);color:#fff;border-radius:16px;padding:18px 22px;box-shadow:0 10px 30px rgba(20,40,80,.18)}
+  .hero h1{font-size:23px;margin:0 0 4px;letter-spacing:-.02em}
+  .hero p{margin:0;color:#cfe0f5;font-size:13.5px;max-width:980px}
+  .case{margin:12px 0 6px;font-size:12.5px;color:var(--muted)} .case b{color:var(--ink)}
+  .legend{display:flex;gap:13px;flex-wrap:wrap;margin:6px 0 12px;font-size:12px}
+  .legend span{display:inline-flex;align-items:center;gap:6px;color:var(--muted)}
+  .sw{width:11px;height:11px;border-radius:4px;border:1px solid}
+  .sw.data{background:#eef4ff;border-color:var(--blue)}.sw.det{background:#e7f6ec;border-color:var(--green)}.sw.llm{background:#fdf1e3;border-color:var(--amber)}.sw.out{background:#f0ecff;border-color:var(--violet)}.sw.dec{background:#fff;border-color:var(--slate)}.sw.flag{background:#fcebec;border-color:var(--red)}
+
+  .board{display:flex;gap:14px;align-items:stretch}
+  #stage{position:relative;flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:16px;height:78vh;min-height:540px;overflow:hidden;box-shadow:0 8px 28px rgba(20,40,80,.08)}
+  #stage:fullscreen{height:100vh;border-radius:0}
+  #diagram{width:100%;height:100%}
+  #diagram svg{width:100%;height:100%;display:block;cursor:grab}#diagram svg:active{cursor:grabbing}
+  #diagram svg .node rect,#diagram svg .node polygon,#diagram svg .node path{filter:drop-shadow(0 1px 2px rgba(15,23,32,.12))}
+  #diagram svg .node rect{rx:9px;ry:9px}
+  #diagram svg .nodeLabel{font-weight:600}
+  #diagram svg .cluster rect{rx:15px;ry:15px;fill:#fafcff;stroke:#d8e0ea}
+  #diagram svg .cluster text{font-weight:700;fill:var(--slate)}
+  #diagram svg g.node.focus rect,#diagram svg g.node.focus polygon{stroke:#1f6feb!important;stroke-width:3.5px!important}
+  #diagram svg g.node.focus{filter:drop-shadow(0 0 0 3px rgba(31,111,235,.25))}
+  .toolbar{position:absolute;top:12px;right:12px;display:flex;gap:6px;background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:11px;padding:6px;box-shadow:0 6px 18px rgba(20,40,80,.12);z-index:5}
+  .toolbar button{width:32px;height:32px;border:none;background:#f3f6fa;border-radius:8px;color:var(--ink);font-size:15px;font-weight:700;cursor:pointer}
+  .toolbar button:hover{background:#e4ecf6}.toolbar .lbl{width:auto;padding:0 10px;font-size:12px}
+
+  #panel{width:360px;flex:none;background:var(--panel);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;box-shadow:0 8px 28px rgba(20,40,80,.08);overflow:hidden}
+  #panel .ph{padding:14px 16px 10px;border-bottom:1px solid var(--line)}
+  #panel .step{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--blue)}
+  #panel h2{font-size:17px;margin:4px 0 0;letter-spacing:-.01em}
+  #panel .body{padding:14px 16px;overflow:auto;flex:1;font-size:13.3px;line-height:1.55}
+  #panel .body a{color:var(--blue);text-decoration:none}#panel .body a:hover{text-decoration:underline}
+  #panel .body .tagrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  #panel .body .t{font-size:10.5px;font-weight:600;border-radius:5px;padding:2px 7px;background:#eef1f5;color:var(--slate)}
+  #panel .body .t.flag{background:#fcebec;color:var(--red)}.t.ok{background:#e7f6ec;color:var(--green)}.t.cite{background:#eef4ff;color:var(--blue)}
+  #panel .nav{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--line);align-items:center}
+  #panel .nav button{flex:1;border:1px solid var(--line);background:#f6f8fb;border-radius:9px;padding:9px 0;font-size:13px;font-weight:600;cursor:pointer}
+  #panel .nav button:hover{background:#eaf0f7}
+  #panel .nav button.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+  #panel .nav .play{flex:none;width:40px}
+  @media(max-width:980px){.board{flex-direction:column}#panel{width:auto}#stage{height:60vh}}
+  footer{margin-top:14px;color:var(--muted);font-size:11.5px}
+</style>
+
+<div class="wrap">
+  <div class="hero">
+    <h1>ORE Workflow Tree, guided</h1>
+    <p>The full decision space, left to right. Use the side panel to step through each decision node, it pans, highlights, and shows the detail and citations. Or drag to explore freely.</p>
+  </div>
+  <p class="case"><b>Case:</b> 62F, invasive ductal carcinoma, cT2N1M0 Stage IIB, ER+/PR+, HER2 IHC 3+, ECOG 1, on trastuzumab + paclitaxel, DPYD untested, no baseline LVEF.</p>
+  <div class="legend">
+    <span><span class="sw dec"></span> decision</span><span><span class="sw det"></span> deterministic</span><span><span class="sw data"></span> data</span><span><span class="sw llm"></span> LLM edge</span><span><span class="sw out"></span> output</span><span><span class="sw flag"></span> gap / safety</span>
+  </div>
+
+  <div class="board">
+    <div id="stage">
+      <div class="toolbar">
+        <button id="zout" title="Zoom out">&minus;</button><button id="zin" title="Zoom in">+</button>
+        <button id="zfit" class="lbl" title="Fit whole tree">Fit</button><button id="zfull" title="Fullscreen">&#9974;</button>
+      </div>
+      <div id="diagram"></div>
+    </div>
+    <div id="panel">
+      <div class="ph"><div class="step" id="pstep">Walkthrough</div><h2 id="ptitle">Press Next to begin</h2></div>
+      <div class="body" id="pbody">Step through the workflow one decision at a time, or click Fit and drag to explore the whole tree. Each step pans to the node, highlights it, and shows the detail and citations here.</div>
+      <div class="nav">
+        <button id="prev">&#9664; Prev</button>
+        <button id="play" class="play" title="Auto-play">&#9654;</button>
+        <button id="next" class="primary">Next &#9654;</button>
+      </div>
+    </div>
+  </div>
+  <footer>Decision support, not a medical device. Illustrative synthetic case; codes, regimens, PMIDs, and NCT ids are verified to demonstrate the engine's logic. A licensed physician reviews and signs.</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+
+  const graph = `flowchart LR
+IN["Patient data in"]:::data
+PARSE["Parse to typed facts"]:::llm
+TERM["Terminology: ICD to SNOMED"]:::data
+BQ{"HER2 status?"}:::dec
+ISH["IHC 2+: reflex ISH"]:::det
+EPI["Episode of Care"]:::data
+CTAG{"Cancer type"}:::dec
+MOTH["other cancer models"]:::det
+SUB{"Breast subtype"}:::dec
+MBR["Breast HER2+ model"]:::det
+SHR["HR+/HER2-neg model"]:::det
+SHL["HER2-low model"]:::det
+STN["triple-negative model"]:::det
+IN --> PARSE --> TERM --> BQ
+BQ -- "IHC 3+" --> EPI
+BQ -- "IHC 2+" --> ISH --> EPI
+BQ -- "0/1+" --> EPI
+EPI --> CTAG
+CTAG -- breast --> SUB
+CTAG -- other --> MOTH
+SUB -- "HER2+" --> MBR
+SUB -- "HR+/HER2-neg" --> SHR
+SUB -- "HER2-low" --> SHL
+SUB -- "TNBC" --> STN
+subgraph FACT["Patient factors weighed"]
+  FACTORS["ECOG, cardiac, organ function,<br/>comorbidity, menopause, BRCA,<br/>intent, interactions, prior line"]:::det
+end
+MBR --> FACTORS
+subgraph PLAN["Treatment planning"]
+  INTENT{"Setting + intent"}:::dec
+  ESC{"Nodal / risk?"}:::dec
+  PDE["de-escalate: APT"]:::det
+  PPREF["Preferred: dual blockade + taxane to surgery"]:::det
+  PADAPT{"Pathologic response?"}:::dec
+  PTDM1["residual to T-DM1"]:::det
+  PCOMP["pCR to complete HER2"]:::det
+  PENDO["adjuvant AI (HR+)"]:::det
+  LOCO["surgery + radiation"]:::det
+  MDT["tumor board"]:::det
+  SUPP["supportive / palliative"]:::det
+  INTENT --> ESC
+  ESC -- "node-positive" --> PPREF
+  ESC -- "node-negative" --> PDE
+  PPREF --> PADAPT
+  PADAPT -- residual --> PTDM1
+  PADAPT -- pCR --> PCOMP
+  PPREF --> PENDO
+  PPREF --> LOCO
+  PPREF --> MDT
+  PPREF --> SUPP
+end
+FACTORS --> INTENT
+subgraph SAFE["Safety screen"]
+  S1{"Cardiotox + LVEF ok?"}:::dec
+  SGAP["GAP: baseline LVEF missing"]:::flag
+  S2{"Anthracycline?"}:::dec
+  S2OK["avoid concurrent"]:::det
+  S3{"Fluoropyrimidine?"}:::dec
+  S3NA["DPYD not gating"]:::det
+  S3T["test DPYD if capecitabine"]:::det
+  S4{"Organ function ok?"}:::dec
+  S5{"Interactions / allergies?"}:::dec
+  S1 -- "no LVEF" --> SGAP
+  S2 -- none --> S2OK
+  S3 -- "no FP" --> S3NA
+  S3 -- "if added" --> S3T
+end
+FACTORS --> S1
+PPREF --> S1
+subgraph CONC["Concordance"]
+  CR1{"HER2-targeted present?"}:::dec
+  CC1["CONCORDANT"]:::det
+  CR2{"Dual blockade for N+?"}:::dec
+  CC2["ENHANCE: add pertuzumab"]:::flag
+  CR3{"Endocrine for HR+?"}:::dec
+  CC3["PENDING: plan AI"]:::det
+  CR1 -- yes --> CC1
+  CR1 --> CR2
+  CR2 -- no --> CC2
+  CR2 --> CR3
+  CR3 -- "not yet" --> CC3
+end
+MBR --> CR1
+QUAL{"Data complete?"}:::dec
+QHI["high confidence"]:::det
+QABS["ABSTAIN + tumor board"]:::flag
+GAPS["Clinical gaps"]:::flag
+TRL["Trial match (recruiting)"]:::det
+TRG["Triage to queue"]:::det
+PUBMED["PubMed grounding"]:::llm
+MBR --> QUAL
+QUAL -- yes --> QHI
+QUAL -- thin --> QABS
+MBR --> GAPS
+MBR --> TRL
+MBR --> TRG
+ORCH["Orchestration + consensus"]:::llm
+OUT["Outputs: physician + patient view"]:::out
+SIGN{"Physician signs"}:::dec
+FBP["reinforce"]:::det
+FBE["correction"]:::det
+GATE["eval gate to next version"]:::det
+PPREF --> ORCH
+PTDM1 --> ORCH
+PCOMP --> ORCH
+PENDO --> ORCH
+LOCO --> ORCH
+MDT --> ORCH
+SUPP --> ORCH
+PDE --> ORCH
+CC1 --> ORCH
+CC2 --> ORCH
+CC3 --> ORCH
+SGAP --> ORCH
+S2OK --> ORCH
+S3NA --> ORCH
+S3T --> ORCH
+GAPS --> ORCH
+QHI --> ORCH
+QABS --> ORCH
+TRL --> ORCH
+TRG --> ORCH
+PUBMED --> ORCH
+ORCH --> OUT --> SIGN
+SIGN -- agree --> FBP
+SIGN -- edit --> FBE
+FBP --> GATE
+FBE --> GATE
+GATE -.->|improves| EPI
+classDef data fill:#eef4ff,stroke:#1f6feb,color:#0e1622;
+classDef det fill:#e7f6ec,stroke:#15803d,color:#0e1622;
+classDef llm fill:#fdf1e3,stroke:#b45309,color:#0e1622;
+classDef out fill:#f0ecff,stroke:#6d4aff,color:#0e1622;
+classDef dec fill:#ffffff,stroke:#64748b,color:#0e1622;
+classDef flag fill:#fcebec,stroke:#b91c1c,color:#0e1622;`;
+
+  const steps = [
+    { id:'IN', title:'1. Patient data in', html:'A consuming product (ClearOnc) sends ORE one normalized envelope of the patient record and claims. <div class="tagrow"><span class="t">touchpoint</span></div>' },
+    { id:'PARSE', title:'2. Parse to typed facts', html:'An LLM extracts the record into typed, validated facts: <b>ER+, PR+, HER2 IHC 3+, cT2N1M0, ECOG 1, trastuzumab, paclitaxel</b>. High-stakes fields are cross-checked by a second model. <div class="tagrow"><span class="t">LLM edge</span></div>' },
+    { id:'TERM', title:'3. Terminology', html:'The diagnosis code is normalized: <b>ICD-10-CM C50.912 to SNOMED 254837009</b> (malignant neoplasm of breast). ICD is preserved; SNOMED is what the engines reason over, so the case works for US and international partners.' },
+    { id:'BQ', title:'4. HER2 status (biomarker gating)', html:'<b>IHC 3+ is definitively HER2-positive</b>, no reflex ISH needed. IHC 1+ or 0 would not be actionable; <b>2+ triggers reflex ISH</b>. Only a confirmed positive opens a targeted pathway. <div class="tagrow"><span class="t ok">actionable</span></div>' },
+    { id:'EPI', title:'5. Episode of Care', html:'The canonical, longitudinal record: triple-positive, Stage IIB, node-positive, with provenance and a confidence on every fact. Every engine reads from this.' },
+    { id:'SUB', title:'6. Breast subtype routing', html:'The episode routes to a subtype model, each with its own pathways and AE profile: <b>HER2+ (this case)</b>, HR+/HER2-negative (endocrine + CDK4/6, Oncotype), HER2-low (T-DXd), triple-negative (chemo + IO, BRCA to PARP). This is why ORE is not one generic model.' },
+    { id:'FACTORS', title:'7. Patient factors weighed', html:'Every consideration the plan and safety screen read: performance status (ECOG 1), cardiac and organ function, comorbidity burden, menopausal status, germline BRCA, intent and goals of care, drug interactions and allergies, patient preference, and prior therapy and line.' },
+    { id:'ESC', title:'8. Escalate or de-escalate', html:'<b>Node-positive (N1) to dual HER2 blockade.</b> Node-negative small tumors de-escalate to paclitaxel + trastuzumab (APT). This patient is N1, so dual blockade is indicated. <div class="tagrow"><span class="t">decision</span></div>' },
+    { id:'PPREF', title:'9. Preferred plan (generated)', html:'<b>Neoadjuvant trastuzumab + pertuzumab + a taxane, then surgery.</b> Cited: <a href="https://pubmed.ncbi.nlm.nih.gov/22153890/">NeoSphere 22153890</a>; Perjeta FDA neoadjuvant indication (tumor &gt;2 cm or node-positive). <div class="tagrow"><span class="t cite">NeoSphere</span><span class="t cite">FDA label</span></div>' },
+    { id:'PADAPT', title:'10. Response-adapted adjuvant', html:'Driven by surgery: <b>residual disease to adjuvant T-DM1 x14</b> (<a href="https://pubmed.ncbi.nlm.nih.gov/30516102/">KATHERINE 30516102</a>, <a href="https://pubmed.ncbi.nlm.nih.gov/39813643/">OS 39813643</a>); <b>pCR to complete one year of HER2 therapy</b> (<a href="https://pubmed.ncbi.nlm.nih.gov/28581356/">APHINITY 28581356</a>). Plus adjuvant aromatase inhibitor for 5+ years for the HR-positive component.' },
+    { id:'CR2', title:'11. Concordance: the catch', html:'The recorded <b>trastuzumab + paclitaxel</b> is the node-NEGATIVE regimen (<a href="https://pubmed.ncbi.nlm.nih.gov/25564897/">APT 25564897</a>). For this node-positive patient, ORE flags <b>ENHANCE: add pertuzumab</b> for dual blockade. A real second-opinion catch, cited APHINITY and NeoSphere. <div class="tagrow"><span class="t flag">enhance</span></div>' },
+    { id:'SGAP', title:'12. Safety: cardiotoxicity + LVEF', html:'Trastuzumab is cardiotoxic. There is <b>no baseline LVEF on file</b>, yet she is on therapy. The FDA boxed warning requires a baseline echo or MUGA before the first dose, then every 3 months. <b>Gap: obtain baseline LVEF now.</b> <div class="tagrow"><span class="t flag">safety gap</span><span class="t cite">FDA boxed warning</span></div>' },
+    { id:'S3T', title:'13. Pharmacogenomics (DPYD)', html:'DPYD is untested but <b>conditional</b>: it does not gate the current regimen (no fluoropyrimidine). It becomes relevant only if <b>capecitabine</b> is used later, then test DPYD; a poor metabolizer should avoid it. <a href="https://doi.org/10.1002/cpt.911">CPIC 10.1002/cpt.911</a>.' },
+    { id:'PUBMED', title:'14. PubMed grounding', html:'Ranked HER2-positive evidence grounds the explanation: APHINITY, KATHERINE (and the 2025 OS update), NeoSphere, HERA, NSABP B-31/N9831. <b>Literature grounds the language; it never overrides the cited deterministic decision.</b> <div class="tagrow"><span class="t">LLM edge</span></div>' },
+    { id:'TRL', title:'15. Trial match', html:'Real recruiting trials (verified): <a href="https://clinicaltrials.gov/study/NCT07616427">NCT07616427</a> (HR+/HER2+ neoadjuvant, strongest phenotype match), NCT05035836, NCT07196774. Eligibility depends on treatment phase. ORE flags candidates; it does not enroll.' },
+    { id:'ORCH', title:'16. Orchestration', html:'PHI is de-identified before any external model. The LLM drafts the explanation grounded by PubMed. Flags require <b>multi-model consensus</b> before they surface.' },
+    { id:'OUT', title:'17. Outputs', html:'A cited physician view and a patient-friendly summary: <b>add pertuzumab, obtain baseline LVEF, plan endocrine therapy, trial option</b>. The clinician reviews and signs. <div class="tagrow"><span class="t out">physician + patient</span></div>' },
+    { id:'SIGN', title:'18. Feedback loop', html:'The physician agree / disagree / edit signal becomes a labeled signal, gated by the eval suite, that improves the next ORE version. Gated, never auto-applied.' },
+  ];
+
+  mermaid.initialize({ startOnLoad:false, theme:'base', themeVariables:{ fontFamily:'-apple-system, Segoe UI, Roboto, sans-serif', fontSize:'13px', lineColor:'#9aa7b6', edgeLabelBackground:'#ffffff' }, flowchart:{ nodeSpacing:34, rankSpacing:56, htmlLabels:true, useMaxWidth:false, curve:'basis', padding:10 } });
+
+  const host = document.getElementById('diagram');
+  let pz=null, svgEl=null, cur=-1, timer=null;
+  function findNode(id){
+    if(!svgEl) return null;
+    const nodes=[...svgEl.querySelectorAll('g.node')];
+    return nodes.find(e=>e.id && (e.id==='flowchart-'+id || e.id.startsWith('flowchart-'+id+'-') || e.id.indexOf('-'+id+'-')>-1)) || null;
+  }
+  function focusNode(id){
+    svgEl && svgEl.querySelectorAll('g.node.focus').forEach(e=>e.classList.remove('focus'));
+    const n=findNode(id); if(!n||!pz) return;
+    n.classList.add('focus');
+    try{ pz.zoom(1.9); }catch(e){}
+    requestAnimationFrame(()=>{
+      try{
+        const s=document.getElementById('stage').getBoundingClientRect();
+        const r=n.getBoundingClientRect();
+        const dx=(s.left+s.width/2)-(r.left+r.width/2);
+        const dy=(s.top+s.height/2)-(r.top+r.height/2);
+        const p=pz.getPan(); pz.pan({x:p.x+dx,y:p.y+dy});
+      }catch(e){}
+    });
+  }
+  function show(i){
+    cur=Math.max(0,Math.min(steps.length-1,i));
+    const st=steps[cur];
+    document.getElementById('pstep').textContent='Step '+(cur+1)+' of '+steps.length;
+    document.getElementById('ptitle').textContent=st.title.replace(/^\\d+\\.\\s*/,'');
+    document.getElementById('pbody').innerHTML=st.html;
+    focusNode(st.id);
+  }
+  function stopPlay(){ if(timer){clearInterval(timer);timer=null;document.getElementById('play').innerHTML='&#9654;';} }
+
+  try{
+    const { svg } = await mermaid.render('oreWf', graph);
+    host.innerHTML=svg; svgEl=host.querySelector('svg');
+    svgEl.removeAttribute('style'); svgEl.setAttribute('width','100%'); svgEl.setAttribute('height','100%');
+    if(window.svgPanZoom){
+      pz=window.svgPanZoom(svgEl,{ zoomEnabled:true, panEnabled:true, controlIcons:false, fit:true, center:true, minZoom:0.06, maxZoom:18, zoomScaleSensitivity:0.4 });
+      const fit=()=>{stopPlay();pz.resize();pz.fit();pz.center();};
+      document.getElementById('zin').onclick=()=>{stopPlay();pz.zoomIn();};
+      document.getElementById('zout').onclick=()=>{stopPlay();pz.zoomOut();};
+      document.getElementById('zfit').onclick=fit;
+      window.addEventListener('resize',()=>{pz.resize();pz.fit();pz.center();});
+      document.addEventListener('fullscreenchange',()=>setTimeout(()=>{pz.resize();pz.fit();pz.center();},60));
+    }
+    document.getElementById('zfull').onclick=()=>{const c=document.getElementById('stage'); if(!document.fullscreenElement){c.requestFullscreen&&c.requestFullscreen();}else{document.exitFullscreen();}};
+    document.getElementById('next').onclick=()=>{stopPlay();show(cur+1);};
+    document.getElementById('prev').onclick=()=>{stopPlay();show(cur-1);};
+    document.getElementById('play').onclick=()=>{
+      if(timer){stopPlay();return;}
+      document.getElementById('play').innerHTML='&#10073;&#10073;';
+      if(cur<0) show(0);
+      timer=setInterval(()=>{ if(cur>=steps.length-1){stopPlay();return;} show(cur+1); },4200);
+    };
+  }catch(e){ host.innerHTML='<p style="padding:20px;color:#b91c1c">Diagram failed to render: '+(e&&e.message?e.message:e)+'</p>'; }
+</script>

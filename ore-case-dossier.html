@@ -1,0 +1,189 @@
+<title>ORE Case Dossier</title>
+<style>
+  :root{--ink:#0e1622;--muted:#5b6b7a;--faint:#8595a4;--line:#e6eaf0;--bg:#eef1f6;--panel:#fff;--blue:#1f6feb;--green:#15803d;--amber:#b45309;--red:#b91c1c;--violet:#6d4aff;--slate:#64748b;--softb:#eef4ff;--softg:#e7f6ec;--softa:#fdf1e3;--softr:#fcebec;--softv:#f0ecff;--softs:#eef1f5}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1040px;margin:0 auto;padding:28px 20px 70px}
+  .hero{background:linear-gradient(135deg,#11213b,#1f3b73 60%,#2563c9);color:#fff;border-radius:18px;padding:22px 26px;box-shadow:0 10px 30px rgba(20,40,80,.18)}
+  .hero .k{font-size:11.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#9fc1ff}
+  .hero h1{font-size:24px;margin:5px 0 8px;letter-spacing:-.02em}
+  .hero p{margin:0;color:#cfe0f5;font-size:13.5px}
+  .hero .chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+  .hero .chip{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.22);border-radius:999px;padding:4px 11px;font-size:12px;color:#eaf1fb}
+  section{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin-top:14px;box-shadow:0 2px 10px rgba(20,40,80,.04)}
+  .sh{display:flex;align-items:center;gap:9px;margin:0 0 10px}
+  .sh .n{flex:none;width:24px;height:24px;border-radius:7px;background:var(--ink);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .sh h2{font-size:16px;margin:0;letter-spacing:-.01em}
+  .sh .badge{margin-left:auto;font-size:11px;font-weight:700;border-radius:6px;padding:3px 9px}
+  .badge.ok{background:var(--softg);color:var(--green)} .badge.warn{background:var(--softa);color:var(--amber)} .badge.flag{background:var(--softr);color:var(--red)} .badge.info{background:var(--softb);color:var(--blue)}
+  p{margin:0 0 9px;font-size:13.3px} .muted{color:var(--muted)}
+  table{width:100%;border-collapse:collapse;font-size:12.8px;margin:4px 0}
+  th,td{text-align:left;padding:8px 11px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);background:var(--bg)}
+  tr:last-child td{border-bottom:0}
+  .chip{font-size:10.5px;font-weight:600;border-radius:5px;padding:2px 7px;white-space:nowrap}
+  .chip.ok{background:var(--softg);color:var(--green)}.chip.warn{background:var(--softa);color:var(--amber)}.chip.flag{background:var(--softr);color:var(--red)}.chip.info{background:var(--softb);color:var(--blue)}.chip.n{background:var(--softs);color:var(--slate)}
+  a{color:var(--blue);text-decoration:none} a:hover{text-decoration:underline}
+  .kv{display:grid;grid-template-columns:150px 1fr;gap:4px 14px;font-size:13px}
+  .kv dt{color:var(--muted)} .kv dd{margin:0;font-weight:500}
+  .callout{border-radius:10px;padding:11px 14px;font-size:13px;margin:8px 0}
+  .callout.flag{background:var(--softr);border:1px solid #f3c9cd} .callout.flag b{color:var(--red)}
+  .callout.ok{background:var(--softg);border:1px solid #bfe3cb} .callout.ok b{color:var(--green)}
+  ul{margin:4px 0 0;padding-left:20px} li{margin:4px 0;font-size:13px}
+  .cite{font-size:11px;color:var(--muted)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  footer{margin-top:18px;color:var(--muted);font-size:11.5px}
+  @media(max-width:760px){.kv{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}}
+</style>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="k">ORE case dossier, what the engine produces for one patient</div>
+    <h1>Triple-positive, node-positive, Stage IIB breast cancer</h1>
+    <p>62F, invasive ductal carcinoma, left breast, cT2N1M0 (Stage IIB), ER+/PR+, HER2 IHC 3+, ECOG 1. Currently on trastuzumab plus paclitaxel. DPYD untested. No baseline LVEF on file.</p>
+    <div class="chips"><span class="chip">deterministic, every claim cited</span><span class="chip">decision support, physician signs</span><span class="chip">illustrative synthetic case</span></div>
+  </div>
+
+  <section>
+    <div class="sh"><span class="n">1</span><h2>Episode of Care</h2><span class="badge info">canonical record</span></div>
+    <dl class="kv">
+      <dt>Diagnosis</dt><dd>Invasive ductal carcinoma, left breast</dd>
+      <dt>Subtype</dt><dd>Triple-positive: HER2-positive and hormone-receptor positive</dd>
+      <dt>Stage</dt><dd>cT2N1M0, Stage IIB (node-positive)</dd>
+      <dt>Performance</dt><dd>ECOG 1</dd>
+      <dt>Current therapy</dt><dd>Trastuzumab + paclitaxel (line 1)</dd>
+      <dt>Provenance</dt><dd>Every fact carries its source and a confidence; staging and biomarkers are documented, line of therapy derived from the medication record</dd>
+    </dl>
+  </section>
+
+  <section>
+    <div class="sh"><span class="n">2</span><h2>Terminology mapping (ICD to SNOMED)</h2><span class="badge ok">normalized</span></div>
+    <table>
+      <thead><tr><th>Element</th><th>Source code</th><th>Standard concept</th></tr></thead>
+      <tbody>
+        <tr><td>Diagnosis</td><td>ICD-10-CM C50.912</td><td>SNOMED 254837009, Malignant neoplasm of breast</td></tr>
+        <tr><td>HER2 test</td><td>HER2 IHC (LOINC)</td><td>Tumor marker, HER2</td></tr>
+        <tr><td>Trastuzumab</td><td>brand and generic</td><td>RxNorm ingredient</td></tr>
+        <tr><td>Paclitaxel</td><td>brand and generic</td><td>RxNorm ingredient</td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="margin-top:8px">The ICD code is preserved; the SNOMED standard concept is what the engines reason over, so the same case works for US and international partners.</p>
+  </section>
+
+  <section>
+    <div class="sh"><span class="n">3</span><h2>Biomarkers</h2><span class="badge ok">HER2 definitive</span></div>
+    <table>
+      <thead><tr><th>Marker</th><th>Result</th><th>Actionable</th><th>Meaning for treatment</th></tr></thead>
+      <tbody>
+        <tr><td>HER2</td><td>IHC 3+</td><td><span class="chip ok">yes</span></td><td>Definitively HER2-positive, no reflex ISH needed. IHC 1+ or 2+ would NOT be actionable (2+ mandates reflex ISH). Qualifies for HER2-targeted therapy.</td></tr>
+        <tr><td>ER</td><td>Positive</td><td><span class="chip ok">yes</span></td><td>Hormone-driven, indicates adjuvant endocrine therapy (aromatase inhibitor, postmenopausal).</td></tr>
+        <tr><td>PR</td><td>Positive</td><td><span class="chip n">prognostic</span></td><td>Refines prognosis; supports endocrine sensitivity.</td></tr>
+        <tr><td>Ki-67</td><td>not on file</td><td><span class="chip n">n/a</span></td><td>Not a treatment-selection biomarker in HER2-positive disease; its absence is not a meaningful gap.</td></tr>
+        <tr><td>Oncotype / MammaPrint</td><td>not on file</td><td><span class="chip n">n/a</span></td><td>Validated only in HR-positive, HER2-negative disease; not standard here, so not a gap.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <div class="sh"><span class="n">4</span><h2>Line of therapy and treatment plan</h2><span class="badge warn">enhancement found</span></div>
+    <p><b>Line:</b> Line 1 (trastuzumab + paclitaxel), derived from the medication record. Treatment-naive prior to this.</p>
+    <p><b>Recommended plan (generated, cited):</b> for node-positive (N1), HER2-positive, HR-positive Stage IIB disease:</p>
+    <ul>
+      <li><b>Neoadjuvant dual HER2 blockade plus a taxane</b> (trastuzumab + pertuzumab + taxane, e.g. THP or TCHP), then surgery. Cited: <a href="https://pubmed.ncbi.nlm.nih.gov/22153890/">NeoSphere, PMID 22153890</a>; Perjeta FDA neoadjuvant indication (tumor &gt;2 cm or node-positive).</li>
+      <li><b>Response-adapted adjuvant therapy:</b> residual invasive disease at surgery to <b>adjuvant T-DM1 for 14 cycles</b> (<a href="https://pubmed.ncbi.nlm.nih.gov/30516102/">KATHERINE, PMID 30516102</a>; <a href="https://pubmed.ncbi.nlm.nih.gov/39813643/">OS update, PMID 39813643</a>); pathologic complete response to complete one year of HER2 therapy (trastuzumab + pertuzumab, <a href="https://pubmed.ncbi.nlm.nih.gov/28581356/">APHINITY, PMID 28581356</a>).</li>
+      <li><b>Adjuvant endocrine therapy</b> for the HR-positive component, an aromatase inhibitor for at least 5 years, after chemotherapy and concurrent with continued HER2 therapy.</li>
+    </ul>
+    <div class="callout flag"><b>Key finding for the second opinion:</b> the recorded regimen (single-agent trastuzumab + paclitaxel) is the regimen validated for <b>node-negative</b> small tumors (<a href="https://pubmed.ncbi.nlm.nih.gov/25564897/">APT, PMID 25564897</a>). This patient is <b>node-positive (N1)</b>, where <b>dual HER2 blockade by adding pertuzumab</b> has the clearest benefit. ORE recommends adding pertuzumab and planning response-adapted adjuvant therapy.</div>
+  </section>
+
+  <section>
+    <div class="sh"><span class="n">5</span><h2>Concordance assessment</h2><span class="badge warn">partially concordant</span></div>
+    <table>
+      <thead><tr><th>Criterion</th><th>Verdict</th><th>Basis (cited)</th></tr></thead>
+      <tbody>
+        <tr><td>HER2-targeted therapy for HER2-positive disease</td><td><span class="chip ok">concordant</span></td><td>Trastuzumab is recorded. Herceptin FDA label, node-positive HER2-overexpressing indication.</td></tr>
+        <tr><td>Dual HER2 blockade for node-positive disease</td><td><span class="chip flag">discordant / enhance</span></td><td>Pertuzumab not recorded; the recorded regimen matches the node-negative standard. APHINITY, NeoSphere.</td></tr>
+        <tr><td>Endocrine therapy for HR-positive disease</td><td><span class="chip info">pending</span></td><td>Not yet recorded; typically begins after chemotherapy. Standard for ER/PR-positive disease.</td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="margin-top:8px">ORE does not rubber-stamp the recorded plan; it surfaces the node-positive dual-blockade gap with citations and defers the decision to the physician.</p>
+  </section>
+
+  <section>
+    <div class="sh"><span class="n">6</span><h2>Adverse-event risk</h2><span class="badge flag">monitoring gap</span></div>
+    <table>
+      <thead><tr><th>Risk</th><th>Incidence</th><th>Management</th></tr></thead>
+      <tbody>
+        <tr><td>HER2-therapy cardiotoxicity (trastuzumab ± pertuzumab), no anthracycline</td><td>Asymptomatic LVEF decline ~7 to 19%; symptomatic heart failure ~0.4 to 4%. Largely reversible on holding therapy.</td><td>Baseline LVEF, then every 3 months on therapy, every 6 months for 2 years after. Hold for a 16% absolute drop. <a href="https://pubmed.ncbi.nlm.nih.gov/23475636/">CLEOPATRA cardiac safety, PMID 23475636</a>; Herceptin FDA boxed warning.</td></tr>
+        <tr><td>Concurrent anthracycline + trastuzumab</td><td>~27% LV dysfunction, ~16% NYHA III/IV heart failure (<a href="https://pubmed.ncbi.nlm.nih.gov/11248153/">Slamon, PMID 11248153</a>)</td><td>Avoid concurrent use. This patient is anthracycline-free, the safer modern approach.</td></tr>
+        <tr><td>Paclitaxel</td><td>Severe hypersensitivity 2 to 4%; dose-dependent peripheral neuropathy</td><td>Premedicate (corticosteroid + H1 + H2 antagonist); monitor and dose-modify neuropathy. Taxol FDA label.</td></tr>
+      </tbody>
+    </table>
+    <div class="callout flag"><b>Active safety gap:</b> there is no baseline LVEF on file, yet she is already on trastuzumab. The FDA label requires a baseline echo or MUGA before the first dose. Obtain it now and start serial monitoring.</div>
+  </section>
+
+  <section>
+    <div class="sh"><span class="n">7</span><h2>Pharmacogenomics (PGx)</h2><span class="badge info">conditional</span></div>
+    <p><b>DPYD: untested.</b> Not required for the current trastuzumab + paclitaxel regimen (no fluoropyrimidine). It becomes relevant only if <b>capecitabine</b> is later considered (for example as an alternative in residual disease, or a later line).</p>
+    <p class="muted">If capecitabine is planned, test DPYD first: CPIC says poor metabolizers (activity score 0 or 0.5) should <b>avoid</b> fluoropyrimidines. <a href="https://doi.org/10.1002/cpt.911">CPIC DPYD guideline, DOI 10.1002/cpt.911</a> (PMID 29152729); FDA capecitabine and 5-FU labels now flag DPD deficiency.</p>
+  </section>
+
+  <section>
+    <div class="sh"><span class="n">8</span><h2>PubMed evidence, HER2-positive breast specific</h2><span class="badge ok">ranked, verified</span></div>
+    <p class="muted">Ranked by study tier (Phase 3 RCT outranks Phase 2). Each PMID verified on PubMed. Literature grounds the explanation; it does not override the cited deterministic decision.</p>
+    <table>
+      <thead><tr><th>Trial</th><th>Finding</th><th>Tier</th><th>PMID</th></tr></thead>
+      <tbody>
+        <tr><td>APHINITY</td><td>Adjuvant pertuzumab improves invasive DFS, benefit concentrated in node-positive disease</td><td>Phase 3 RCT</td><td><a href="https://pubmed.ncbi.nlm.nih.gov/28581356/">28581356</a></td></tr>
+        <tr><td>KATHERINE</td><td>Adjuvant T-DM1 for residual disease, 50% lower recurrence risk vs trastuzumab</td><td>Phase 3 RCT</td><td><a href="https://pubmed.ncbi.nlm.nih.gov/30516102/">30516102</a></td></tr>
+        <tr><td>KATHERINE (OS, 2025)</td><td>Sustained IDFS and significant overall-survival benefit at 8.4 years</td><td>Phase 3 RCT, long-term</td><td><a href="https://pubmed.ncbi.nlm.nih.gov/39813643/">39813643</a></td></tr>
+        <tr><td>NSABP B-31 / N9831</td><td>Established adjuvant trastuzumab added to chemotherapy</td><td>Phase 3 RCTs (joint)</td><td><a href="https://pubmed.ncbi.nlm.nih.gov/16236738/">16236738</a></td></tr>
+        <tr><td>HERA</td><td>One year of trastuzumab after chemotherapy improves DFS</td><td>Phase 3 RCT</td><td><a href="https://pubmed.ncbi.nlm.nih.gov/16236737/">16236737</a></td></tr>
+        <tr><td>NeoSphere</td><td>Neoadjuvant pertuzumab raises pathologic complete response to 45.8%</td><td>Phase 2 RCT</td><td><a href="https://pubmed.ncbi.nlm.nih.gov/22153890/">22153890</a></td></tr>
+        <tr><td>CLEOPATRA (cardiac)</td><td>Adding pertuzumab did not increase cardiac events; LV dysfunction largely reversible</td><td>Phase 3 RCT</td><td><a href="https://pubmed.ncbi.nlm.nih.gov/23475636/">23475636</a></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <div class="sh"><span class="n">9</span><h2>Matching clinical trials (recruiting)</h2><span class="badge ok">live, verified</span></div>
+    <table>
+      <thead><tr><th>NCT</th><th>Title</th><th>Phase</th><th>Fit</th></tr></thead>
+      <tbody>
+        <tr><td><a href="https://clinicaltrials.gov/study/NCT07616427">NCT07616427</a></td><td>Fovinaciclib + AI + dual HER2 blockade, response-adapted neoadjuvant, HR+/HER2+ early breast</td><td>2</td><td><span class="chip ok">strong, exact phenotype</span></td></tr>
+        <tr><td><a href="https://clinicaltrials.gov/study/NCT05035836">NCT05035836</a></td><td>Zanidatamab in early-stage HER2-positive breast cancer</td><td>2</td><td><span class="chip info">good</span></td></tr>
+        <tr><td><a href="https://clinicaltrials.gov/study/NCT07196774">NCT07196774</a></td><td>SHR-A1811 vs others, neoadjuvant HER2-positive early/locally advanced</td><td>3</td><td><span class="chip info">good</span></td></tr>
+        <tr><td><a href="https://clinicaltrials.gov/study/NCT07057427">NCT07057427</a></td><td>Nab-PHP vs TCbHP neoadjuvant, HER2-positive early breast</td><td>3</td><td><span class="chip info">good</span></td></tr>
+      </tbody>
+    </table>
+    <p class="muted" style="margin-top:8px">Eligibility depends on treatment phase and washout; most are neoadjuvant designs. Confirm prior-therapy criteria with each study team. ORE flags candidates; it does not enroll.</p>
+  </section>
+
+  <section>
+    <div class="sh"><span class="n">10</span><h2>Clinical gaps</h2><span class="badge flag">1 important</span></div>
+    <table>
+      <thead><tr><th>Gap</th><th>Severity</th><th>Why it matters</th></tr></thead>
+      <tbody>
+        <tr><td>No baseline LVEF before trastuzumab</td><td><span class="chip flag">important</span></td><td>Cardiac-safety standard of care and an FDA-label requirement; she is on therapy without it.</td></tr>
+        <tr><td>DPYD genotyping</td><td><span class="chip warn">conditional</span></td><td>Only needed if a fluoropyrimidine (capecitabine) is added later.</td></tr>
+        <tr><td>Pertuzumab not on the recorded plan</td><td><span class="chip warn">enhance</span></td><td>Dual blockade is the node-positive standard (see concordance).</td></tr>
+        <tr><td>Ki-67, recurrence assay</td><td><span class="chip n">not a gap</span></td><td>Not standard treatment-selection biomarkers in HER2-positive disease.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <div class="grid2">
+    <section style="margin-top:0">
+      <div class="sh"><span class="n">11</span><h2>Quality and confidence</h2></div>
+      <p>Diagnosis, stage, and the actionable biomarker are documented, so concordance and planning run at <b>high confidence</b>. The plan is provisional pending the baseline LVEF and the dual-blockade decision. Conformance, completeness, and plausibility all pass.</p>
+    </section>
+    <section style="margin-top:0">
+      <div class="sh"><span class="n">12</span><h2>Patient-friendly summary</h2></div>
+      <p class="muted" style="font-size:12.5px">Your breast cancer is a type that responds to HER2-targeted treatment and to hormone therapy. The recommended plan adds a second HER2 medicine (pertuzumab) because lymph nodes are involved, then surgery, then treatment guided by what the surgery shows. A heart scan should be done before continuing the HER2 medicine. Your care team will confirm every step.</p>
+    </section>
+  </div>
+
+  <footer>
+    Illustrative ORE output for a synthetic case. Decision support, not a medical device or a treatment directive; a licensed physician reviews, edits, and signs. All PMIDs and NCT ids were verified against PubMed and ClinicalTrials.gov (June 2026); regimen and guideline statements reflect established oncology standards (ASCO, NCCN, FDA labels, CPIC). Every clinical assertion carries a citation.
+  </footer>
+</div>

@@ -1,0 +1,258 @@
+<title>ORE Decision Tree</title>
+<style>
+  :root{--ink:#0e1622;--muted:#5b6b7a;--faint:#8595a4;--line:#e4e9ef;--bg:#eef1f6;--panel:#fff;--blue:#1f6feb;--green:#15803d;--amber:#b45309;--violet:#6d4aff;--slate:#64748b}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1320px;margin:0 auto;padding:24px 20px 50px}
+  .hero{background:linear-gradient(135deg,#11213b 0%,#1f3b73 55%,#2563c9 100%);color:#fff;border-radius:18px;padding:22px 26px;box-shadow:0 10px 30px rgba(20,40,80,.18)}
+  .hero h1{font-size:25px;margin:0 0 5px;letter-spacing:-.02em}
+  .hero p{margin:0;color:#cfe0f5;font-size:14px;max-width:820px}
+  .hero .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .hero .chip{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:999px;padding:4px 11px;font-size:12px;color:#eaf1fb}
+  .case{margin:14px 0 6px;font-size:13px;color:var(--muted)}
+  .case b{color:var(--ink)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;margin:8px 0 14px;font-size:12.5px}
+  .legend span{display:inline-flex;align-items:center;gap:7px;color:var(--muted)}
+  .sw{width:12px;height:12px;border-radius:4px;border:1px solid}
+  .sw.data{background:#eef4ff;border-color:var(--blue)}.sw.det{background:#e7f6ec;border-color:var(--green)}.sw.llm{background:#fdf1e3;border-color:var(--amber)}.sw.out{background:#f0ecff;border-color:var(--violet)}.sw.dec{background:#fff;border-color:var(--slate)}
+
+  #stage{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:18px;height:76vh;min-height:520px;overflow:hidden;box-shadow:0 8px 28px rgba(20,40,80,.08)}
+  #stage:fullscreen{height:100vh;border-radius:0}
+  #diagram{width:100%;height:100%}
+  #diagram svg{width:100%;height:100%;display:block;cursor:grab}
+  #diagram svg:active{cursor:grabbing}
+  /* node polish injected onto the rendered SVG */
+  #diagram svg .node rect,#diagram svg .node polygon,#diagram svg .node path{filter:drop-shadow(0 1px 2px rgba(15,23,32,.12))}
+  #diagram svg .node rect{rx:10px;ry:10px}
+  #diagram svg .nodeLabel{font-weight:600}
+  #diagram svg .cluster rect{rx:16px;ry:16px;fill:#fafcff;stroke:#d8e0ea;stroke-width:1.2px}
+  #diagram svg .cluster .cluster-label,#diagram svg .cluster text{font-weight:700;fill:var(--slate)}
+  #diagram svg .edgePaths path{stroke-width:1.6px}
+  #diagram svg .edgeLabel{font-size:11px}
+  #diagram svg .edgeLabel rect,#diagram svg .edgeLabel .label-container{fill:#fff;opacity:.92}
+
+  .toolbar{position:absolute;top:14px;right:14px;display:flex;gap:6px;background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:12px;padding:6px;box-shadow:0 6px 18px rgba(20,40,80,.12);z-index:5}
+  .toolbar button{width:34px;height:34px;border:none;background:#f3f6fa;border-radius:9px;color:var(--ink);font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s}
+  .toolbar button:hover{background:#e4ecf6}
+  .toolbar .lbl{width:auto;padding:0 11px;font-size:12px;font-weight:600}
+  .hint{position:absolute;left:14px;bottom:12px;font-size:11.5px;color:var(--faint);background:rgba(255,255,255,.85);border-radius:8px;padding:4px 9px;z-index:5}
+  footer{margin-top:20px;color:var(--muted);font-size:12px}
+</style>
+
+<div class="wrap">
+  <div class="hero">
+    <h1>ORE Decision Tree</h1>
+    <p>The deterministic decision logic, from patient data in to a cited, physician-signed result. Diamonds are decision points. Green is the deterministic core, amber is the bounded LLM edge.</p>
+    <div class="chips"><span class="chip">deterministic core, probabilistic edges</span><span class="chip">every claim cited</span><span class="chip">abstains when unsure</span></div>
+  </div>
+
+  <p class="case"><b>Case threaded through:</b> 62F, Stage IIB, ER+/PR+, HER2 IHC 3+ invasive ductal breast carcinoma, on trastuzumab plus paclitaxel, DPYD untested, no baseline LVEF.</p>
+
+  <div class="legend">
+    <span><span class="sw dec"></span> decision point</span>
+    <span><span class="sw det"></span> deterministic outcome</span>
+    <span><span class="sw data"></span> data / episode</span>
+    <span><span class="sw llm"></span> LLM edge</span>
+    <span><span class="sw out"></span> output</span>
+  </div>
+
+  <div id="stage">
+    <div class="toolbar">
+      <button id="zout" title="Zoom out">&minus;</button>
+      <button id="zin" title="Zoom in">+</button>
+      <button id="zfit" class="lbl" title="Fit to screen">Fit</button>
+      <button id="zfull" title="Fullscreen">&#9974;</button>
+    </div>
+    <div id="diagram"></div>
+    <div class="hint">Drag to pan, scroll to zoom, or use the controls. Fullscreen for the call.</div>
+  </div>
+
+  <footer>Decision support, not a medical device. Codes, drugs, and values are illustrative of the engine's logic. Each cancer-type model runs the same engine subtree; only the Breast path is drawn for the worked case.</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+
+  const graph = `flowchart TD
+IN["Patient data in (records + claims)"]:::data
+PARSE["Parse: LLM extracts typed facts, dual pass"]:::llm
+TERM["Terminology: ICD to SNOMED"]:::data
+BQ{"Biomarker confirmed positive?"}:::dec
+ACT["actionable true"]:::det
+NACT["actionable false (IHC 1+ or 2+)"]:::det
+EPI["Episode of Care (provenance + confidence)"]:::data
+CTAG{"Cancer-type tag"}:::dec
+MBR["Breast model: HER2+/HR+/TNBC, cardiotox AE"]:::det
+MLU["Lung model: EGFR/ALK/ROS1"]:::det
+MOT["model per cancer type"]:::det
+IN --> PARSE --> TERM --> BQ
+BQ -- "HER2 IHC 3+" --> ACT
+BQ -- "IHC 1+ or 2+" --> NACT
+ACT --> EPI
+NACT --> EPI
+EPI --> CTAG
+CTAG -- "Breast (this case)" --> MBR
+CTAG -- "NSCLC" --> MLU
+CTAG -- "other" --> MOT
+subgraph PLANG["Treatment planning: GENERATE the plan"]
+  L1["Determine line of therapy from prior treatments"]:::det
+  LQ{"Prior systemic line?"}:::dec
+  L1L["recommend 1L"]:::det
+  LNL["recommend next line"]:::det
+  PSEL{"Candidate regimen for biomarker + stage + line?"}:::dec
+  PABS["ABSTAIN: no applicable regimen"]:::det
+  PSCR{"Passes AE + PGx safety screen?"}:::dec
+  PEXC["exclude (e.g. DPYD avoid 5-FU)"]:::det
+  PCAU["flag caution (e.g. low LVEF + trastuzumab)"]:::det
+  PRANK["rank by evidence tier"]:::det
+  PPLAN["Plan: preferred + alternatives, line, biomarker, cited"]:::det
+  L1 --> LQ
+  LQ -- "no, naive" --> L1L
+  LQ -- yes --> LNL
+  L1L --> PSEL
+  LNL --> PSEL
+  PSEL -- no --> PABS
+  PSEL -- "yes (HER2+, Stage II, 1L)" --> PSCR
+  PSCR -- "no, PGx avoid" --> PEXC
+  PSCR -- caution --> PCAU
+  PSCR -- yes --> PRANK
+  PCAU --> PRANK
+  PRANK --> PPLAN
+end
+subgraph CONCO["Concordance: VALIDATE recorded care"]
+  C1{"Applicable pathway?"}:::dec
+  CABS["ABSTAIN: insufficient evidence"]:::det
+  C2{"Gating biomarker confirmed?"}:::dec
+  CINS["Insufficient: recommend test"]:::det
+  C3{"Recorded care matches step?"}:::dec
+  CCON["CONCORDANT (cited: Herceptin FDA label)"]:::det
+  CDIS["DISCORDANT (cited)"]:::det
+  C1 -- no --> CABS
+  C1 -- yes --> C2
+  C2 -- no --> CINS
+  C2 -- "yes, HER2+" --> C3
+  C3 -- "yes, trastuzumab" --> CCON
+  C3 -- no --> CDIS
+end
+subgraph PGXG["Pharmacogenomics"]
+  X1{"Drug has a PGx gene?"}:::dec
+  XNO["no finding"]:::det
+  X2{"Genotype on file?"}:::dec
+  XTEST["recommend PGx test before dosing"]:::det
+  X3{"Phenotype"}:::dec
+  XSTD["standard dose"]:::det
+  XRED["reduce dose, CPIC cited"]:::det
+  XAVO["avoid or alternative, CPIC cited"]:::det
+  X1 -- no --> XNO
+  X1 -- "yes, DPYD etc" --> X2
+  X2 -- no --> XTEST
+  X2 -- yes --> X3
+  X3 -- normal --> XSTD
+  X3 -- intermediate --> XRED
+  X3 -- "poor or deficient" --> XAVO
+end
+subgraph AEG["Adverse-event risk"]
+  A1{"Drug class in AE map?"}:::dec
+  A2{"Comorbidity or poor ECOG?"}:::dec
+  AEH["escalate severity"]:::det
+  AEB["baseline severity + monitoring, FDA cited"]:::det
+  A1 -- "yes, trastuzumab to cardiotox" --> A2
+  A2 -- yes --> AEH
+  A2 -- no --> AEB
+end
+subgraph GAPG["Gap detection"]
+  G1{"Required workup present?"}:::dec
+  GF["flag gap, lower confidence (no LVEF, Ki-67)"]:::det
+  GO["no gap"]:::det
+  G1 -- no --> GF
+  G1 -- yes --> GO
+end
+TRG["Triage: SLA + acuity + comorbidity to queue (operational, this case: yellow)"]:::det
+TRL["Trial matching: rank by cancer type + biomarker eligibility, NCT cited"]:::det
+QUA["Quality: conformance + completeness + plausibility to confidence"]:::det
+MBR --> L1
+MBR --> C1
+MBR --> X1
+MBR --> A1
+MBR --> G1
+MBR --> TRG
+MBR --> TRL
+MBR --> QUA
+ORCH["Orchestration: PHI de-id, LLM explains GROUNDED by ranked PubMed (never overrides a guideline), multi-model consensus"]:::llm
+OUT["Outputs: physician view + patient summary, all cited"]:::out
+SIGN{"Physician reviews and signs"}:::dec
+FBP["reinforce"]:::det
+FBE["labeled correction"]:::det
+GATE["Eval labels, KG corrections, calibration, gated to next version"]:::det
+PPLAN --> ORCH
+PABS --> ORCH
+CCON --> ORCH
+CDIS --> ORCH
+CABS --> ORCH
+CINS --> ORCH
+XSTD --> ORCH
+XRED --> ORCH
+XAVO --> ORCH
+XTEST --> ORCH
+XNO --> ORCH
+AEH --> ORCH
+AEB --> ORCH
+GF --> ORCH
+GO --> ORCH
+TRG --> ORCH
+TRL --> ORCH
+QUA --> ORCH
+ORCH --> OUT --> SIGN
+SIGN -- agree --> FBP
+SIGN -- "disagree or edit" --> FBE
+FBP --> GATE
+FBE --> GATE
+GATE -.->|improves next version| EPI
+classDef data fill:#eef4ff,stroke:#1f6feb,color:#0e1622;
+classDef det fill:#e7f6ec,stroke:#15803d,color:#0e1622;
+classDef llm fill:#fdf1e3,stroke:#b45309,color:#0e1622;
+classDef out fill:#f0ecff,stroke:#6d4aff,color:#0e1622;
+classDef dec fill:#ffffff,stroke:#64748b,color:#0e1622;`;
+
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'base',
+    themeVariables: {
+      fontFamily: '-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, sans-serif',
+      fontSize: '13px',
+      lineColor: '#9aa7b6',
+      edgeLabelBackground: '#ffffff',
+    },
+    flowchart: { nodeSpacing: 34, rankSpacing: 48, htmlLabels: true, useMaxWidth: false, curve: 'basis' },
+  });
+
+  const host = document.getElementById('diagram');
+  try {
+    const { svg } = await mermaid.render('oreTree', graph);
+    host.innerHTML = svg;
+    const el = host.querySelector('svg');
+    el.removeAttribute('style');
+    el.setAttribute('width', '100%');
+    el.setAttribute('height', '100%');
+
+    let pz = null;
+    if (window.svgPanZoom) {
+      pz = window.svgPanZoom(el, { zoomEnabled: true, panEnabled: true, controlIcons: false, fit: true, center: true, minZoom: 0.12, maxZoom: 12, zoomScaleSensitivity: 0.4 });
+      const fit = () => { pz.resize(); pz.fit(); pz.center(); };
+      document.getElementById('zin').onclick = () => pz.zoomIn();
+      document.getElementById('zout').onclick = () => pz.zoomOut();
+      document.getElementById('zfit').onclick = fit;
+      window.addEventListener('resize', fit);
+      document.addEventListener('fullscreenchange', () => setTimeout(fit, 60));
+    }
+    document.getElementById('zfull').onclick = () => {
+      const c = document.getElementById('stage');
+      if (!document.fullscreenElement) { c.requestFullscreen && c.requestFullscreen(); }
+      else { document.exitFullscreen(); }
+    };
+  } catch (e) {
+    host.innerHTML = '<p style="padding:20px;color:#b91c1c">Diagram failed to render: ' + (e && e.message ? e.message : e) + '</p>';
+  }
+</script>
