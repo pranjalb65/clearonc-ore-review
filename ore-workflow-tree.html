@@ -40,7 +40,7 @@
   #diagram svg .cluster text{font-weight:700;fill:var(--slate)}
   #diagram svg g.node.focus rect,#diagram svg g.node.focus polygon{stroke:var(--blue)!important;stroke-width:3.5px!important}
   #diagram svg g.node.focus{filter:drop-shadow(0 0 0 2px #fff) drop-shadow(0 0 6px rgba(31,111,235,.55))}
-  #diagram svg.stepping g.node:not(.focus){opacity:.55;transition:opacity .2s}
+  #diagram svg.stepping g.node:not(.focus):not(.rel){opacity:.3;transition:opacity .2s}
   #diagram svg g.node.clickable{cursor:pointer}
   .toolbar{position:absolute;top:12px;right:12px;display:flex;gap:6px;background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:11px;padding:6px;box-shadow:0 6px 18px rgba(20,40,80,.12);z-index:5}
   .toolbar button{width:38px;height:38px;border:none;background:#f3f6fa;border-radius:8px;color:var(--ink);font-size:17px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
@@ -107,21 +107,29 @@
   .legend .li{display:flex;flex-direction:column;gap:2px;color:var(--muted)}
   .legend .li .lh{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--ink);font-size:12.5px}
   .legend .li .ld{font-size:11.5px;color:var(--muted);line-height:1.4}
+  #diagram svg g.node.rel rect,#diagram svg g.node.rel polygon{stroke:var(--blue)!important;stroke-width:2.4px!important}
+  #diagram svg g.node.rel{filter:drop-shadow(0 0 5px rgba(31,111,235,.45))}
+  .embed .hero{display:none}
+  .embed .wrap{padding-top:14px}
+  .embed #stage{height:calc(100vh - 196px);min-height:420px}
+  .context{padding:11px 16px}
+  .legend{grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:8px 14px}
 </style>
 </head>
 <body>
+<script>try{if(window.self!==window.top)document.documentElement.classList.add('embed')}catch(e){document.documentElement.classList.add('embed')}</script>
 <div class="wrap">
   <div class="hero">
     <div class="brand">ORE</div>
     <h1>ORE Workflow Tree</h1>
     <p>The full decision space, left to right, guided. Use the side panel to step through each decision node, it pans, highlights, and shows the detail and citations. Or drag to explore freely.
-    <span class="arch">Every clinical decision and every flag is deterministic and cited (green). A language model is used only to read the record, ground wording in the literature, and write the explanation (amber). It never makes or overrides a decision. <b>All steps are shown. Only the amber ones use a language model, and none of them is a decision.</b></span></p>
+    <span class="arch">Every clinical decision and every flag is deterministic and cited (green). Three live model agents are used, only to read the record, ground wording in the literature, and write the explanation (amber). They never make or override a decision. <b>All steps are shown. Only the amber ones use a language model, and none of them is a decision.</b></span></p>
   </div>
   <main>
   <div class="context">
     <p class="case"><b>This tree is the ORE architecture; the same steps apply to any cancer type. Example:</b> 62F, invasive ductal carcinoma, cT2N1M0 Stage IIB, ER+/PR+, HER2 IHC 3+, ECOG 1, on trastuzumab plus paclitaxel, DPYD untested, no baseline LVEF.</p>
     <div class="legend">
-      <span class="li"><span class="lh"><span class="sw dec"></span> decision</span><span class="ld">A branch point, a question the engine evaluates.</span></span><span class="li"><span class="lh"><span class="sw det"></span> deterministic</span><span class="ld">A cited, rule-based outcome. The core of the engine.</span></span><span class="li"><span class="lh"><span class="sw data"></span> data</span><span class="ld">A record or data fact, the input and the Episode.</span></span><span class="li"><span class="lh"><span class="sw llm"></span> LLM edge</span><span class="ld">The few places a model is used: read, ground, explain. It never decides.</span></span><span class="li"><span class="lh"><span class="sw out"></span> output</span><span class="ld">What ORE produces: the physician view and the patient summary.</span></span><span class="li"><span class="lh"><span class="sw flag"></span> gap, safety</span><span class="ld">A safety gap or a missing fact that needs action.</span></span><span class="li"><span class="lh"><span class="sw catch"></span> engine catch</span><span class="ld">Where ORE improves on the recorded plan.</span></span>
+      <span class="li"><span class="lh"><span class="sw dec"></span> decision</span><span class="ld">A branch point, a question the engine evaluates.</span></span><span class="li"><span class="lh"><span class="sw det"></span> deterministic</span><span class="ld">A cited, rule-based outcome. The core of the engine.</span></span><span class="li"><span class="lh"><span class="sw data"></span> data</span><span class="ld">A record or data fact, the input and the Episode.</span></span><span class="li"><span class="lh"><span class="sw llm"></span> LLM edge</span><span class="ld">Live model agents in three roles only: read the record, ground wording in evidence, write the explanation. They never decide.</span></span><span class="li"><span class="lh"><span class="sw out"></span> output</span><span class="ld">What ORE produces: the physician view and the patient summary.</span></span><span class="li"><span class="lh"><span class="sw flag"></span> gap, safety</span><span class="ld">A safety gap or a missing fact that needs action.</span></span><span class="li"><span class="lh"><span class="sw catch"></span> engine catch</span><span class="ld">Where ORE improves on the recorded plan.</span></span>
     </div>
   </div>
 
@@ -410,6 +418,18 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     for(var i=0;i<d.length;i++){ if(i) pills+='<span class="darr">&#8594;</span>'; pills+='<span class="dt '+(d[i].k||'')+'">'+d[i].t+'</span>'; }
     return '<div class="deriv"><span class="dl">How ORE arrives here</span>'+pills+'</div>';
   }
+  const REL = {
+    BQ:['BQ','ISH'],
+    SUB:['SUB','MBR','SHR','SHL','STN'],
+    ESC:['ESC','PPREF','PDE'],
+    PPREF:['PPREF','PADAPT','PTDM1','PCOMP','PENDO','LOCO','MDT','SUPP'],
+    PADAPT:['PADAPT','PTDM1','PCOMP'],
+    CR2:['CR1','CC1','CR2','CC2','CR3','CC3'],
+    SGAP:['S1','SGAP','S2','S2OK','S3','S3NA','S3T','S4','S5'],
+    S3T:['S3','S3NA','S3T'],
+    QUAL:['QUAL','QHI','QABS'],
+    SIGN:['SIGN','FBP','FBE','GATE'],
+  };
   function renderFlow(flow){
     if(!flow||!flow.length) return '';
     var cap=function(it){return it.c?'<span class="fc">'+it.c+'</span>':'';};
@@ -441,10 +461,11 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     return nodes.find(e=>e.id && (e.id==='flowchart-'+id || e.id.startsWith('flowchart-'+id+'-') || e.id.indexOf('-'+id+'-')>-1)) || null;
   }
   function focusNode(id){
-    svgEl && svgEl.querySelectorAll('g.node.focus').forEach(e=>e.classList.remove('focus'));
+    svgEl && svgEl.querySelectorAll('g.node.focus, g.node.rel').forEach(function(e){e.classList.remove('focus');e.classList.remove('rel');});
     if(!pz || !svgEl) return;
     const n=findNode(id); if(!n) return;
     n.classList.add('focus');
+    (REL[id]||[]).forEach(function(rid){ if(rid!==id){ var rn=findNode(rid); if(rn) rn.classList.add('rel'); } });
     svgEl.classList.add('stepping');
     if(reduce){
       try{ pz.zoom(2.5); }catch(e){}
