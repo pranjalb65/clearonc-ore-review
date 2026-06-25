@@ -75,7 +75,7 @@
     <div class="brand">ORE</div>
     <h1>ORE Workflow Tree</h1>
     <p>The full decision space, left to right, guided. Use the side panel to step through each decision node, it pans, highlights, and shows the detail and citations. Or drag to explore freely.
-    <span class="arch">Every clinical decision and every flag is deterministic and cited (green). A language model is used only to read the record, ground wording in the literature, and write the explanation (amber). It never makes or overrides a decision. <b>The model touches 3 of 30+ steps, none of them a decision.</b></span></p>
+    <span class="arch">Every clinical decision and every flag is deterministic and cited (green). A language model is used only to read the record, ground wording in the literature, and write the explanation (amber). It never makes or overrides a decision. <b>Every step in this tree is shown. The model touches only 3 of them (the amber nodes), and none is a decision.</b></span></p>
   </div>
   <main>
   <div class="context">
@@ -143,11 +143,11 @@ subgraph FACT["Patient factors weighed"]
 end
 MBR --> FACTORS
 subgraph PLAN["Treatment planning"]
-  INTENT{"Setting + intent"}:::dec
-  ESC{"Nodal or risk?"}:::dec
+  INTENT{"Setting and<br/>intent"}:::dec
+  ESC{"Nodal or<br/>risk?"}:::dec
   PDE["de-escalate: APT"]:::det
   PPREF["Preferred: dual blockade + taxane to surgery"]:::det
-  PADAPT{"Pathologic response?"}:::dec
+  PADAPT{"Pathologic<br/>response?"}:::dec
   PTDM1["residual to T-DM1"]:::det
   PCOMP["pCR to complete HER2"]:::det
   PENDO["adjuvant endocrine therapy (HR+)"]:::det
@@ -167,15 +167,15 @@ subgraph PLAN["Treatment planning"]
 end
 FACTORS --> INTENT
 subgraph SAFE["Safety screen"]
-  S1{"Cardiotox + LVEF ok?"}:::dec
+  S1{"Cardiotox and<br/>LVEF ok?"}:::dec
   SGAP["GAP: baseline LVEF missing"]:::flag
-  S2{"Anthracycline?"}:::dec
+  S2{"Anthracycline<br/>used?"}:::dec
   S2OK["avoid concurrent"]:::det
-  S3{"Fluoropyrimidine?"}:::dec
+  S3{"Fluoro-<br/>pyrimidine?"}:::dec
   S3NA["DPYD not gating"]:::det
   S3T["test DPYD if capecitabine"]:::det
-  S4{"Organ function ok?"}:::dec
-  S5{"Interactions or allergies?"}:::dec
+  S4{"Organ<br/>function ok?"}:::dec
+  S5{"Interactions,<br/>allergies?"}:::dec
   S1 -- "no LVEF" --> SGAP
   S2 -- none --> S2OK
   S3 -- "no FP" --> S3NA
@@ -184,11 +184,11 @@ end
 FACTORS --> S1
 PPREF --> S1
 subgraph CONC["Concordance"]
-  CR1{"HER2-targeted present?"}:::dec
+  CR1{"HER2-targeted<br/>present?"}:::dec
   CC1["CONCORDANT"]:::det
-  CR2{"Dual blockade for N+?"}:::dec
+  CR2{"Dual blockade<br/>for N+?"}:::dec
   CC2["ENHANCE: add pertuzumab"]:::catch
-  CR3{"Endocrine for HR+?"}:::dec
+  CR3{"Endocrine<br/>for HR+?"}:::dec
   CC3["PENDING: plan endocrine therapy"]:::det
   CR1 -- yes --> CC1
   CR1 --> CR2
@@ -274,7 +274,7 @@ classDef catch fill:#f0ecff,stroke:#6d4aff,color:#0e1622;`;
 
   const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  mermaid.initialize({ startOnLoad:false, theme:'base', themeVariables:{ fontFamily:'-apple-system, Segoe UI, Roboto, sans-serif', fontSize:'15px', lineColor:'#9aa7b6', edgeLabelBackground:'#ffffff' }, flowchart:{ nodeSpacing:34, rankSpacing:56, htmlLabels:true, useMaxWidth:false, curve:'basis', padding:10 } });
+  mermaid.initialize({ startOnLoad:false, theme:'base', themeVariables:{ fontFamily:'-apple-system, Segoe UI, Roboto, sans-serif', fontSize:'14px', lineColor:'#9aa7b6', edgeLabelBackground:'#ffffff' }, flowchart:{ nodeSpacing:42, rankSpacing:66, htmlLabels:true, useMaxWidth:false, curve:'basis', padding:16 } });
 
   const host = document.getElementById('diagram');
   const prev = document.getElementById('prev');
