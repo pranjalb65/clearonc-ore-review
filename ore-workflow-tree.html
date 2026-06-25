@@ -87,6 +87,9 @@
   #panel .flow .fchip.me{border-color:var(--blue);background:#eef4ff;color:#1452c9}
   #panel .flow .fchip.catch{background:var(--fill-catch);border-color:#cdbef7;color:var(--catch)}
   #panel .flow .fchip.flag{background:var(--fill-flag);border-color:#f3c9cd;color:var(--red)}
+  #panel .archline{font-size:13.5px;color:var(--ink);margin:0 0 12px;padding:0 0 12px;border-bottom:1px dashed var(--line)}
+  #panel .incase{font-size:13.3px;line-height:1.55}
+  #panel .incase .ic{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--blue);background:#eef4ff;border-radius:5px;padding:2px 7px;margin-right:6px}
 </style>
 </head>
 <body>
@@ -99,7 +102,7 @@
   </div>
   <main>
   <div class="context">
-    <p class="case"><b>Case:</b> 62F, invasive ductal carcinoma, cT2N1M0 Stage IIB, ER+/PR+, HER2 IHC 3+, ECOG 1, on trastuzumab plus paclitaxel, DPYD untested, no baseline LVEF.</p>
+    <p class="case"><b>This tree is the ORE architecture; the same steps apply to any cancer type. Example:</b> 62F, invasive ductal carcinoma, cT2N1M0 Stage IIB, ER+/PR+, HER2 IHC 3+, ECOG 1, on trastuzumab plus paclitaxel, DPYD untested, no baseline LVEF.</p>
     <div class="legend">
       <span><span class="sw dec"></span> decision</span><span><span class="sw det"></span> deterministic</span><span><span class="sw data"></span> data</span><span><span class="sw llm"></span> LLM edge</span><span><span class="sw out"></span> output</span><span><span class="sw flag"></span> gap, safety</span><span><span class="sw catch"></span> engine catch</span>
     </div>
@@ -312,6 +315,26 @@ classDef catch fill:#f0ecff,stroke:#6d4aff,color:#0e1622;`;
     OUT:[{t:'Cited recommendation',k:'out',chips:[{t:'Add pertuzumab'},{t:'Obtain LVEF'},{t:'Plan endocrine'},{t:'Trial option'}]},{t:'Physician and patient views',k:'out'}],
     SIGN:[{t:'Physician reviews',k:'dec',chips:[{t:'Agree, reinforce',k:'det'},{t:'Edit, correction',k:'det'}]},{t:'Eval gate to next version',k:'det',c:'gated, never auto-applied'}],
   };
+  const ARCH = {
+    IN:{t:'Data intake',d:'Any product sends ORE one normalized record. The boundary is disease and product agnostic.'},
+    PARSE:{t:'Structured extraction',d:'A language model turns the raw record into typed, validated facts. One of the few places the model is used.'},
+    TERM:{t:'Terminology normalization',d:'Source codes map to a standard vocabulary, so the same logic runs across coding systems and countries.'},
+    BQ:{t:'Biomarker actionability gate',d:'The engine checks whether a result is definitive enough to open a targeted pathway, or whether it needs a confirmatory test.'},
+    EPI:{t:'Episode of Care',d:'Every fact lands in one longitudinal record with its source and a confidence. Every engine reads from this.'},
+    SUB:{t:'Subtype stratification',d:'The disease routes to a subtype-specific model, each with its own pathways and risk profile. ORE is not one generic model.'},
+    FACTORS:{t:'Patient-factor intake',d:'The plan and the safety screen read the whole patient, not just the diagnosis.'},
+    ESC:{t:'Risk-adapted intensity',d:'Treatment intensity is escalated or de-escalated based on stage and risk.'},
+    PPREF:{t:'Plan generation',d:'A guideline-concordant, cited plan is generated for the determined line and setting.'},
+    PADAPT:{t:'Response-adapted branching',d:'Later therapy is chosen by how the patient responds, not fixed in advance.'},
+    CR2:{t:'Concordance validation',d:'Recorded care is checked against the cited standard. Gaps and enhancements are flagged, never silently overridden.'},
+    SGAP:{t:'Safety and monitoring screen',d:'The engine checks drug-specific risks and required monitoring, and flags any missing baseline test.'},
+    S3T:{t:'Pharmacogenomic safety check',d:'When a planned drug has a known gene interaction, the engine requires the genotype before dosing.'},
+    PUBMED:{t:'Evidence grounding',d:'Ranked literature grounds the wording. It never overrides a cited decision.'},
+    TRL:{t:'Trial matching',d:'Recruiting trials are matched by phenotype and stage. The engine flags candidates, it does not enroll.'},
+    ORCH:{t:'Orchestration',d:'Identifiers are removed, the explanation is drafted and grounded, and flags require agreement across models.'},
+    OUT:{t:'Output generation',d:'A cited clinician view and a plain-language patient summary are produced.'},
+    SIGN:{t:'Sign-off and feedback',d:'A licensed physician signs. Their agree, edit, or reject signal improves the next version, gated, never auto-applied.'},
+  };
   function renderFlow(flow){
     if(!flow||!flow.length) return '';
     var cap=function(it){return it.c?'<span class="fc">'+it.c+'</span>':'';};
@@ -378,7 +401,9 @@ classDef catch fill:#f0ecff,stroke:#6d4aff,color:#0e1622;`;
     const st=steps[cur];
     document.getElementById('pstep').textContent='Step '+(cur+1)+' of '+steps.length;
     document.getElementById('ptitle').textContent=st.title.replace(/^\d+\.\s*/,'');
-    document.getElementById('pbody').innerHTML=st.html+renderFlow(FLOWS[st.id]);
+    var A=ARCH[st.id]||{};
+    if(A.t) document.getElementById('ptitle').textContent=A.t;
+    document.getElementById('pbody').innerHTML=(A.d?'<div class="archline">'+A.d+'</div>':'')+'<div class="incase"><span class="ic">In this case</span> '+st.html+'</div>'+renderFlow(FLOWS[st.id]);
     prev.disabled = cur===0;
     next.disabled = cur===steps.length-1;
     focusNode(st.id);
