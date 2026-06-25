@@ -1,18 +1,29 @@
-<title>ORE Workflow Tree</title>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ORE, Oncology Reasoning Engine</title>
 <style>
-  :root{--ink:#0e1622;--muted:#5b6b7a;--faint:#8595a4;--line:#e4e9ef;--bg:#eef1f6;--panel:#fff;--blue:#1f6feb;--green:#15803d;--amber:#b45309;--violet:#6d4aff;--slate:#64748b;--red:#b91c1c}
+  :root{--ink:#0e1622;--muted:#5b6b7a;--faint:#8595a4;--line:#e4e9ef;--bg:#eef1f6;--panel:#fff;--blue:#1f6feb;--green:#15803d;--amber:#b45309;--violet:#6d4aff;--slate:#64748b;--red:#b91c1c;--catch:#6d4aff;--fill-data:#eef4ff;--fill-det:#e7f6ec;--fill-llm:#fdf1e3;--fill-out:#f0ecff;--fill-dec:#fff;--fill-flag:#fcebec;--fill-catch:#f0ecff}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%}
   body{background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1480px;margin:0 auto;padding:22px 18px 40px}
-  .hero{background:linear-gradient(135deg,#11213b,#1f3b73 55%,#2563c9);color:#fff;border-radius:16px;padding:18px 22px;box-shadow:0 10px 30px rgba(20,40,80,.18)}
-  .hero h1{font-size:23px;margin:0 0 4px;letter-spacing:-.02em}
-  .hero p{margin:0;color:#cfe0f5;font-size:13.5px;max-width:980px}
-  .case{margin:12px 0 6px;font-size:12.5px;color:var(--muted)} .case b{color:var(--ink)}
-  .legend{display:flex;gap:13px;flex-wrap:wrap;margin:6px 0 12px;font-size:12px}
+  .wrap{max-width:1480px;margin:0 auto;padding:32px 28px 48px}
+  .hero{background:linear-gradient(135deg,#11213b,#1f3b73 55%,#2563c9);color:#fff;border-radius:16px;padding:22px 26px;box-shadow:0 10px 30px rgba(20,40,80,.18)}
+  .hero .brand{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#cfe0f5;font-weight:700;margin:0 0 6px}
+  .hero h1{font-size:32px;margin:0 0 6px;letter-spacing:-.02em}
+  .hero p{margin:0;color:#e8f1fc;font-size:15px;max-width:980px}
+  .hero p .arch{display:block;margin-top:8px;color:#dbe7fa;font-size:13.5px}
+  .hero p .arch b{color:#fff}
+  .context{background:#f7f9fc;border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:14px 0;box-shadow:0 8px 28px rgba(20,40,80,.08)}
+  .case{font-size:12.5px;color:var(--muted);margin:0 0 12px} .case b{color:var(--ink)}
+  .legend{display:flex;gap:13px;flex-wrap:wrap;font-size:13.5px;margin:0}
   .legend span{display:inline-flex;align-items:center;gap:6px;color:var(--muted)}
   .sw{width:11px;height:11px;border-radius:4px;border:1px solid}
-  .sw.data{background:#eef4ff;border-color:var(--blue)}.sw.det{background:#e7f6ec;border-color:var(--green)}.sw.llm{background:#fdf1e3;border-color:var(--amber)}.sw.out{background:#f0ecff;border-color:var(--violet)}.sw.dec{background:#fff;border-color:var(--slate)}.sw.flag{background:#fcebec;border-color:var(--red)}
+  .sw.data{background:var(--fill-data);border-color:var(--blue)}.sw.det{background:var(--fill-det);border-color:var(--green)}.sw.llm{background:var(--fill-llm);border-color:var(--amber)}.sw.out{background:var(--fill-out);border-color:var(--violet)}.sw.dec{background:var(--fill-dec);border-color:var(--slate)}.sw.flag{background:var(--fill-flag);border-color:var(--red)}.sw.catch{background:var(--fill-catch);border-color:var(--catch)}
+  .legend .note{display:block;flex-basis:100%;margin-top:8px;color:var(--muted);font-size:13px}
+  .legend .note b{color:var(--ink)}
 
   .board{display:flex;gap:14px;align-items:stretch}
   #stage{position:relative;flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:16px;height:78vh;min-height:540px;overflow:hidden;box-shadow:0 8px 28px rgba(20,40,80,.08)}
@@ -22,61 +33,80 @@
   #diagram svg .node rect,#diagram svg .node polygon,#diagram svg .node path{filter:drop-shadow(0 1px 2px rgba(15,23,32,.12))}
   #diagram svg .node rect{rx:9px;ry:9px}
   #diagram svg .nodeLabel{font-weight:600}
+  #diagram svg .edgeLabel{font-weight:600}
+  #diagram svg .edgeLabel foreignObject>div{background:#fff;padding:1px 4px;border-radius:4px}
   #diagram svg .cluster rect{rx:15px;ry:15px;fill:#fafcff;stroke:#d8e0ea}
   #diagram svg .cluster text{font-weight:700;fill:var(--slate)}
-  #diagram svg g.node.focus rect,#diagram svg g.node.focus polygon{stroke:#1f6feb!important;stroke-width:3.5px!important}
-  #diagram svg g.node.focus{filter:drop-shadow(0 0 0 3px rgba(31,111,235,.25))}
+  #diagram svg g.node.focus rect,#diagram svg g.node.focus polygon{stroke:var(--blue)!important;stroke-width:3.5px!important}
+  #diagram svg g.node.focus{filter:drop-shadow(0 0 0 2px #fff) drop-shadow(0 0 6px rgba(31,111,235,.55))}
+  #diagram svg.stepping g.node:not(.focus){opacity:.55;transition:opacity .2s}
+  #diagram svg g.node.clickable{cursor:pointer}
   .toolbar{position:absolute;top:12px;right:12px;display:flex;gap:6px;background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:11px;padding:6px;box-shadow:0 6px 18px rgba(20,40,80,.12);z-index:5}
-  .toolbar button{width:32px;height:32px;border:none;background:#f3f6fa;border-radius:8px;color:var(--ink);font-size:15px;font-weight:700;cursor:pointer}
-  .toolbar button:hover{background:#e4ecf6}.toolbar .lbl{width:auto;padding:0 10px;font-size:12px}
+  .toolbar button{width:38px;height:38px;border:none;background:#f3f6fa;border-radius:8px;color:var(--ink);font-size:17px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+  .toolbar button:hover{background:#e4ecf6}.toolbar .lbl{width:auto;padding:0 10px;font-size:13px}
+  .toolbar button svg{width:18px;height:18px;display:block}
 
   #panel{width:360px;flex:none;background:var(--panel);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;box-shadow:0 8px 28px rgba(20,40,80,.08);overflow:hidden}
   #panel .ph{padding:14px 16px 10px;border-bottom:1px solid var(--line)}
   #panel .step{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--blue)}
-  #panel h2{font-size:17px;margin:4px 0 0;letter-spacing:-.01em}
-  #panel .body{padding:14px 16px;overflow:auto;flex:1;font-size:13.3px;line-height:1.55}
-  #panel .body a{color:var(--blue);text-decoration:none}#panel .body a:hover{text-decoration:underline}
+  #panel h2{font-size:19px;margin:6px 0 0;letter-spacing:-.01em}
+  #panel .body{padding:14px 16px;overflow:auto;flex:1;font-size:14.5px;line-height:1.55}
+  #panel .body a{color:var(--blue);text-decoration:underline}#panel .body a:hover{text-decoration:underline}
   #panel .body .tagrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
-  #panel .body .t{font-size:10.5px;font-weight:600;border-radius:5px;padding:2px 7px;background:#eef1f5;color:var(--slate)}
-  #panel .body .t.flag{background:#fcebec;color:var(--red)}.t.ok{background:#e7f6ec;color:var(--green)}.t.cite{background:#eef4ff;color:var(--blue)}
+  #panel .body .t{font-size:12px;font-weight:600;border-radius:5px;padding:2px 7px;background:#eef1f5;color:#475569}
+  #panel .body .t.flag{background:#fcebec;color:var(--red)}.t.ok{background:#e7f6ec;color:#13702f}.t.cite{background:#eef4ff;color:#1452c9}
   #panel .nav{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--line);align-items:center}
   #panel .nav button{flex:1;border:1px solid var(--line);background:#f6f8fb;border-radius:9px;padding:9px 0;font-size:13px;font-weight:600;cursor:pointer}
-  #panel .nav button:hover{background:#eaf0f7}
+  #panel .nav button:hover:not(:disabled){background:#eaf0f7}
+  #panel .nav button:disabled{opacity:.45;cursor:default;background:#f0f3f7}
   #panel .nav button.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+  #panel .nav button.primary:hover:not(:disabled){background:#1a5fd0}
   #panel .nav .play{flex:none;width:40px}
+  .toolbar button:focus-visible, #panel .nav button:focus-visible, #diagram:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
   @media(max-width:980px){.board{flex-direction:column}#panel{width:auto}#stage{height:60vh}}
-  footer{margin-top:14px;color:var(--muted);font-size:11.5px}
+  @media (prefers-reduced-motion: reduce){#diagram svg g.node, .toolbar button, #panel .nav button, #diagram svg.stepping g.node:not(.focus){transition:none !important}}
+  footer{margin-top:14px;color:var(--muted);font-size:11.5px;border-top:1px solid var(--line);padding-top:12px}
+  footer b{color:var(--ink)}
 </style>
-
+</head>
+<body>
 <div class="wrap">
   <div class="hero">
-    <h1>ORE Workflow Tree, guided</h1>
-    <p>The full decision space, left to right. Use the side panel to step through each decision node, it pans, highlights, and shows the detail and citations. Or drag to explore freely.</p>
+    <div class="brand">ORE</div>
+    <h1>ORE Workflow Tree</h1>
+    <p>The full decision space, left to right, guided. Use the side panel to step through each decision node, it pans, highlights, and shows the detail and citations. Or drag to explore freely.
+    <span class="arch">Every clinical decision and every flag is deterministic and cited (green). A language model is used only to read the record, ground wording in the literature, and write the explanation (amber). It never makes or overrides a decision. <b>The model touches 3 of 30+ steps, none of them a decision.</b></span></p>
   </div>
-  <p class="case"><b>Case:</b> 62F, invasive ductal carcinoma, cT2N1M0 Stage IIB, ER+/PR+, HER2 IHC 3+, ECOG 1, on trastuzumab + paclitaxel, DPYD untested, no baseline LVEF.</p>
-  <div class="legend">
-    <span><span class="sw dec"></span> decision</span><span><span class="sw det"></span> deterministic</span><span><span class="sw data"></span> data</span><span><span class="sw llm"></span> LLM edge</span><span><span class="sw out"></span> output</span><span><span class="sw flag"></span> gap / safety</span>
+  <main>
+  <div class="context">
+    <p class="case"><b>Case:</b> 62F, invasive ductal carcinoma, cT2N1M0 Stage IIB, ER+/PR+, HER2 IHC 3+, ECOG 1, on trastuzumab plus paclitaxel, DPYD untested, no baseline LVEF.</p>
+    <div class="legend">
+      <span><span class="sw dec"></span> decision</span><span><span class="sw det"></span> deterministic</span><span><span class="sw data"></span> data</span><span><span class="sw llm"></span> LLM edge</span><span><span class="sw out"></span> output</span><span><span class="sw flag"></span> gap, safety</span><span><span class="sw catch"></span> engine catch</span>
+    </div>
   </div>
 
   <div class="board">
-    <div id="stage">
-      <div class="toolbar">
-        <button id="zout" title="Zoom out">&minus;</button><button id="zin" title="Zoom in">+</button>
-        <button id="zfit" class="lbl" title="Fit whole tree">Fit</button><button id="zfull" title="Fullscreen">&#9974;</button>
+    <div id="stage" role="region" aria-label="Decision tree diagram">
+      <div class="toolbar" role="toolbar" aria-label="Diagram controls">
+        <button id="zout" title="Zoom out" aria-label="Zoom out">&minus;</button><button id="zin" title="Zoom in" aria-label="Zoom in">+</button>
+        <button id="zfit" class="lbl" title="Fit whole tree" aria-label="Fit whole tree">Fit</button><button id="zfull" title="Enter fullscreen" aria-label="Enter fullscreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
       </div>
-      <div id="diagram"></div>
+      <div id="diagram" tabindex="0" role="application" aria-label="ORE decision tree, pannable. Arrow keys pan, plus and minus zoom, zero fits."></div>
     </div>
-    <div id="panel">
-      <div class="ph"><div class="step" id="pstep">Walkthrough</div><h2 id="ptitle">Press Next to begin</h2></div>
-      <div class="body" id="pbody">Step through the workflow one decision at a time, or click Fit and drag to explore the whole tree. Each step pans to the node, highlights it, and shows the detail and citations here.</div>
+    <div id="panel" role="region" aria-label="Walkthrough">
+      <div aria-live="polite" aria-atomic="true">
+        <div class="ph"><div class="step" id="pstep">Walkthrough</div><h2 id="ptitle">Press Next to begin</h2></div>
+        <div class="body" id="pbody">Step through the workflow one decision at a time, or click Fit and drag to explore the whole tree. Each step pans to the node, highlights it, and shows the detail and citations here.</div>
+      </div>
       <div class="nav">
-        <button id="prev">&#9664; Prev</button>
-        <button id="play" class="play" title="Auto-play">&#9654;</button>
-        <button id="next" class="primary">Next &#9654;</button>
+        <button id="prev"><span aria-hidden="true">&#9664;</span> Prev</button>
+        <button id="play" class="play" title="Play walkthrough" aria-label="Play walkthrough" aria-pressed="false"><span aria-hidden="true">&#9654;</span></button>
+        <button id="next" class="primary">Next <span aria-hidden="true">&#9654;</span></button>
       </div>
     </div>
   </div>
-  <footer>Decision support, not a medical device. Illustrative synthetic case; codes, regimens, PMIDs, and NCT ids are verified to demonstrate the engine's logic. A licensed physician reviews and signs.</footer>
+  </main>
+  <footer><b>Decision support, not a medical device.</b> Illustrative synthetic case; codes, regimens, PMIDs, and NCT ids are verified to demonstrate the reasoning of the engine. A licensed physician reviews and signs.</footer>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
@@ -114,16 +144,16 @@ end
 MBR --> FACTORS
 subgraph PLAN["Treatment planning"]
   INTENT{"Setting + intent"}:::dec
-  ESC{"Nodal / risk?"}:::dec
+  ESC{"Nodal or risk?"}:::dec
   PDE["de-escalate: APT"]:::det
   PPREF["Preferred: dual blockade + taxane to surgery"]:::det
   PADAPT{"Pathologic response?"}:::dec
   PTDM1["residual to T-DM1"]:::det
   PCOMP["pCR to complete HER2"]:::det
-  PENDO["adjuvant AI (HR+)"]:::det
+  PENDO["adjuvant endocrine therapy (HR+)"]:::det
   LOCO["surgery + radiation"]:::det
   MDT["tumor board"]:::det
-  SUPP["supportive / palliative"]:::det
+  SUPP["supportive, palliative"]:::det
   INTENT --> ESC
   ESC -- "node-positive" --> PPREF
   ESC -- "node-negative" --> PDE
@@ -145,7 +175,7 @@ subgraph SAFE["Safety screen"]
   S3NA["DPYD not gating"]:::det
   S3T["test DPYD if capecitabine"]:::det
   S4{"Organ function ok?"}:::dec
-  S5{"Interactions / allergies?"}:::dec
+  S5{"Interactions or allergies?"}:::dec
   S1 -- "no LVEF" --> SGAP
   S2 -- none --> S2OK
   S3 -- "no FP" --> S3NA
@@ -157,9 +187,9 @@ subgraph CONC["Concordance"]
   CR1{"HER2-targeted present?"}:::dec
   CC1["CONCORDANT"]:::det
   CR2{"Dual blockade for N+?"}:::dec
-  CC2["ENHANCE: add pertuzumab"]:::flag
+  CC2["ENHANCE: add pertuzumab"]:::catch
   CR3{"Endocrine for HR+?"}:::dec
-  CC3["PENDING: plan AI"]:::det
+  CC3["PENDING: plan endocrine therapy"]:::det
   CR1 -- yes --> CC1
   CR1 --> CR2
   CR2 -- no --> CC2
@@ -215,10 +245,11 @@ FBE --> GATE
 GATE -.->|improves| EPI
 classDef data fill:#eef4ff,stroke:#1f6feb,color:#0e1622;
 classDef det fill:#e7f6ec,stroke:#15803d,color:#0e1622;
-classDef llm fill:#fdf1e3,stroke:#b45309,color:#0e1622;
+classDef llm fill:#fdf1e3,stroke:#b45309,color:#0e1622,stroke-dasharray:4 2;
 classDef out fill:#f0ecff,stroke:#6d4aff,color:#0e1622;
 classDef dec fill:#ffffff,stroke:#64748b,color:#0e1622;
-classDef flag fill:#fcebec,stroke:#b91c1c,color:#0e1622;`;
+classDef flag fill:#fcebec,stroke:#b91c1c,color:#0e1622,stroke-width:2px;
+classDef catch fill:#f0ecff,stroke:#6d4aff,color:#0e1622;`;
 
   const steps = [
     { id:'IN', title:'1. Patient data in', html:'A consuming product (ClearOnc) sends ORE one normalized envelope of the patient record and claims. <div class="tagrow"><span class="t">touchpoint</span></div>' },
@@ -231,20 +262,28 @@ classDef flag fill:#fcebec,stroke:#b91c1c,color:#0e1622;`;
     { id:'ESC', title:'8. Escalate or de-escalate', html:'<b>Node-positive (N1) to dual HER2 blockade.</b> Node-negative small tumors de-escalate to paclitaxel + trastuzumab (APT). This patient is N1, so dual blockade is indicated. <div class="tagrow"><span class="t">decision</span></div>' },
     { id:'PPREF', title:'9. Preferred plan (generated)', html:'<b>Neoadjuvant trastuzumab + pertuzumab + a taxane, then surgery.</b> Cited: <a href="https://pubmed.ncbi.nlm.nih.gov/22153890/">NeoSphere 22153890</a>; Perjeta FDA neoadjuvant indication (tumor &gt;2 cm or node-positive). <div class="tagrow"><span class="t cite">NeoSphere</span><span class="t cite">FDA label</span></div>' },
     { id:'PADAPT', title:'10. Response-adapted adjuvant', html:'Driven by surgery: <b>residual disease to adjuvant T-DM1 x14</b> (<a href="https://pubmed.ncbi.nlm.nih.gov/30516102/">KATHERINE 30516102</a>, <a href="https://pubmed.ncbi.nlm.nih.gov/39813643/">OS 39813643</a>); <b>pCR to complete one year of HER2 therapy</b> (<a href="https://pubmed.ncbi.nlm.nih.gov/28581356/">APHINITY 28581356</a>). Plus adjuvant aromatase inhibitor for 5+ years for the HR-positive component.' },
-    { id:'CR2', title:'11. Concordance: the catch', html:'The recorded <b>trastuzumab + paclitaxel</b> is the node-NEGATIVE regimen (<a href="https://pubmed.ncbi.nlm.nih.gov/25564897/">APT 25564897</a>). For this node-positive patient, ORE flags <b>ENHANCE: add pertuzumab</b> for dual blockade. A real second-opinion catch, cited APHINITY and NeoSphere. <div class="tagrow"><span class="t flag">enhance</span></div>' },
+    { id:'CR2', title:'11. Concordance: the catch', html:'The recorded <b>trastuzumab + paclitaxel</b> is the node-NEGATIVE regimen (<a href="https://pubmed.ncbi.nlm.nih.gov/25564897/">APT 25564897</a>). For this node-positive patient, ORE flags <b>ENHANCE: add pertuzumab</b> for dual blockade. A real second-opinion catch, cited APHINITY and NeoSphere. <div class="tagrow"><span class="t ok">enhance</span></div>' },
     { id:'SGAP', title:'12. Safety: cardiotoxicity + LVEF', html:'Trastuzumab is cardiotoxic. There is <b>no baseline LVEF on file</b>, yet she is on therapy. The FDA boxed warning requires a baseline echo or MUGA before the first dose, then every 3 months. <b>Gap: obtain baseline LVEF now.</b> <div class="tagrow"><span class="t flag">safety gap</span><span class="t cite">FDA boxed warning</span></div>' },
     { id:'S3T', title:'13. Pharmacogenomics (DPYD)', html:'DPYD is untested but <b>conditional</b>: it does not gate the current regimen (no fluoropyrimidine). It becomes relevant only if <b>capecitabine</b> is used later, then test DPYD; a poor metabolizer should avoid it. <a href="https://doi.org/10.1002/cpt.911">CPIC 10.1002/cpt.911</a>.' },
     { id:'PUBMED', title:'14. PubMed grounding', html:'Ranked HER2-positive evidence grounds the explanation: APHINITY, KATHERINE (and the 2025 OS update), NeoSphere, HERA, NSABP B-31/N9831. <b>Literature grounds the language; it never overrides the cited deterministic decision.</b> <div class="tagrow"><span class="t">LLM edge</span></div>' },
     { id:'TRL', title:'15. Trial match', html:'Real recruiting trials (verified): <a href="https://clinicaltrials.gov/study/NCT07616427">NCT07616427</a> (HR+/HER2+ neoadjuvant, strongest phenotype match), NCT05035836, NCT07196774. Eligibility depends on treatment phase. ORE flags candidates; it does not enroll.' },
     { id:'ORCH', title:'16. Orchestration', html:'PHI is de-identified before any external model. The LLM drafts the explanation grounded by PubMed. Flags require <b>multi-model consensus</b> before they surface.' },
     { id:'OUT', title:'17. Outputs', html:'A cited physician view and a patient-friendly summary: <b>add pertuzumab, obtain baseline LVEF, plan endocrine therapy, trial option</b>. The clinician reviews and signs. <div class="tagrow"><span class="t out">physician + patient</span></div>' },
-    { id:'SIGN', title:'18. Feedback loop', html:'The physician agree / disagree / edit signal becomes a labeled signal, gated by the eval suite, that improves the next ORE version. Gated, never auto-applied.' },
+    { id:'SIGN', title:'18. Feedback loop', html:'The physician agree, disagree, or edit response becomes a labeled signal, gated by the eval suite, that improves the next ORE version. Gated, never auto-applied.' },
   ];
 
-  mermaid.initialize({ startOnLoad:false, theme:'base', themeVariables:{ fontFamily:'-apple-system, Segoe UI, Roboto, sans-serif', fontSize:'13px', lineColor:'#9aa7b6', edgeLabelBackground:'#ffffff' }, flowchart:{ nodeSpacing:34, rankSpacing:56, htmlLabels:true, useMaxWidth:false, curve:'basis', padding:10 } });
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  mermaid.initialize({ startOnLoad:false, theme:'base', themeVariables:{ fontFamily:'-apple-system, Segoe UI, Roboto, sans-serif', fontSize:'15px', lineColor:'#9aa7b6', edgeLabelBackground:'#ffffff' }, flowchart:{ nodeSpacing:34, rankSpacing:56, htmlLabels:true, useMaxWidth:false, curve:'basis', padding:10 } });
 
   const host = document.getElementById('diagram');
-  let pz=null, svgEl=null, cur=-1, timer=null;
+  const prev = document.getElementById('prev');
+  const next = document.getElementById('next');
+  const play = document.getElementById('play');
+  let pz=null, svgEl=null, cur=-1, timer=null, done=false;
+
+  const stepIndex={}; steps.forEach((s,i)=>{ stepIndex[s.id]=i; });
+
   function findNode(id){
     if(!svgEl) return null;
     const nodes=[...svgEl.querySelectorAll('g.node')];
@@ -252,9 +291,22 @@ classDef flag fill:#fcebec,stroke:#b91c1c,color:#0e1622;`;
   }
   function focusNode(id){
     svgEl && svgEl.querySelectorAll('g.node.focus').forEach(e=>e.classList.remove('focus'));
-    const n=findNode(id); if(!n||!pz) return;
+    if(!pz || !svgEl) return;
+    const n=findNode(id); if(!n) return;
     n.classList.add('focus');
-    try{ pz.zoom(1.9); }catch(e){}
+    svgEl.classList.add('stepping');
+    if(reduce){
+      try{ pz.zoom(2.5); }catch(e){}
+      try{
+        const s=document.getElementById('stage').getBoundingClientRect();
+        const r=n.getBoundingClientRect();
+        const dx=(s.left+s.width/2)-(r.left+r.width/2);
+        const dy=(s.top+s.height/2)-(r.top+r.height/2);
+        const p=pz.getPan(); pz.pan({x:p.x+dx,y:p.y+dy});
+      }catch(e){}
+      return;
+    }
+    try{ pz.zoom(2.5); }catch(e){}
     requestAnimationFrame(()=>{
       try{
         const s=document.getElementById('stage').getBoundingClientRect();
@@ -266,36 +318,133 @@ classDef flag fill:#fcebec,stroke:#b91c1c,color:#0e1622;`;
     });
   }
   function show(i){
-    cur=Math.max(0,Math.min(steps.length-1,i));
+    const target=Math.max(0,Math.min(steps.length-1,i));
+    if(target===cur && !done) return;
+    done=false;
+    cur=target;
     const st=steps[cur];
     document.getElementById('pstep').textContent='Step '+(cur+1)+' of '+steps.length;
-    document.getElementById('ptitle').textContent=st.title.replace(/^\\d+\\.\\s*/,'');
+    document.getElementById('ptitle').textContent=st.title.replace(/^\d+\.\s*/,'');
     document.getElementById('pbody').innerHTML=st.html;
+    prev.disabled = cur===0;
+    next.disabled = cur===steps.length-1;
     focusNode(st.id);
   }
-  function stopPlay(){ if(timer){clearInterval(timer);timer=null;document.getElementById('play').innerHTML='&#9654;';} }
+  function stopPlay(){
+    if(timer){clearInterval(timer);timer=null;}
+    play.innerHTML='<span aria-hidden="true">&#9654;</span>';
+    play.setAttribute('aria-pressed','false');
+    play.setAttribute('aria-label','Play walkthrough');
+    play.title='Play walkthrough';
+  }
+  function startPlay(){
+    if(timer){stopPlay();return;}
+    if(cur>=steps.length-1) show(0);
+    play.innerHTML='<span aria-hidden="true">&#10073;&#10073;</span>';
+    play.setAttribute('aria-pressed','true');
+    play.setAttribute('aria-label','Pause walkthrough');
+    play.title='Pause walkthrough';
+    if(cur<0) show(0);
+    timer=setInterval(()=>{
+      if(cur>=steps.length-1){
+        stopPlay();
+        done=true;
+        document.getElementById('pstep').textContent='Done';
+        document.getElementById('ptitle').textContent='Walkthrough complete';
+        document.getElementById('pbody').innerHTML='Walkthrough complete. Press Play to replay.';
+        return;
+      }
+      show(cur+1);
+    },4200);
+  }
+  function clearStepping(){ if(svgEl) svgEl.classList.remove('stepping'); }
+
+  // Wire controls outside the render try block so the walkthrough text works
+  // even if the diagram fails to render.
+  next.onclick=()=>{stopPlay();show(cur+1);};
+  prev.onclick=()=>{stopPlay();show(cur-1);};
+  play.onclick=()=>{ startPlay(); };
+  document.getElementById('zfull').onclick=()=>{const c=document.getElementById('stage'); if(!document.fullscreenElement){c.requestFullscreen&&c.requestFullscreen();}else{document.exitFullscreen();}};
+
+  function setFullscreenLabel(){
+    const z=document.getElementById('zfull');
+    if(document.fullscreenElement){
+      z.setAttribute('aria-label','Exit fullscreen'); z.title='Exit fullscreen';
+      z.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
+    }else{
+      z.setAttribute('aria-label','Enter fullscreen'); z.title='Enter fullscreen';
+      z.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+    }
+  }
+
+  // Keyboard navigation for the walkthrough and the canvas.
+  document.addEventListener('keydown',(e)=>{
+    const tag=(e.target&&e.target.tagName)||'';
+    if(tag==='INPUT'||tag==='TEXTAREA') return;
+    const k=e.key;
+    if(k==='ArrowRight'||k==='PageDown'||k===' '){ e.preventDefault(); stopPlay(); show(cur+1); }
+    else if(k==='ArrowLeft'||k==='PageUp'){ e.preventDefault(); stopPlay(); show(cur-1); }
+    else if(k==='p'||k==='P'){ e.preventDefault(); startPlay(); }
+    else if(k==='f'||k==='F'){ e.preventDefault(); if(pz){stopPlay();clearStepping();pz.resize();pz.fit();pz.center();} }
+    else if(k==='+'||k==='='){ if(pz){stopPlay();pz.zoomIn();} }
+    else if(k==='-'||k==='_'){ if(pz){stopPlay();pz.zoomOut();} }
+    else if(k==='Escape'){ stopPlay(); if(document.fullscreenElement){document.exitFullscreen();} }
+  });
+
+  // Canvas keyboard panning and zoom when the diagram region has focus.
+  host.addEventListener('keydown',(e)=>{
+    if(!pz) return;
+    const k=e.key;
+    if(k==='ArrowRight'){ e.preventDefault(); pz.panBy({x:-80,y:0}); }
+    else if(k==='ArrowLeft'){ e.preventDefault(); pz.panBy({x:80,y:0}); }
+    else if(k==='ArrowUp'){ e.preventDefault(); pz.panBy({x:0,y:80}); }
+    else if(k==='ArrowDown'){ e.preventDefault(); pz.panBy({x:0,y:-80}); }
+    else if(k==='+'||k==='='){ e.preventDefault(); pz.zoomIn(); }
+    else if(k==='-'||k==='_'){ e.preventDefault(); pz.zoomOut(); }
+    else if(k==='0'){ e.preventDefault(); stopPlay(); clearStepping(); pz.resize(); pz.fit(); pz.center(); }
+  });
 
   try{
     const { svg } = await mermaid.render('oreWf', graph);
     host.innerHTML=svg; svgEl=host.querySelector('svg');
     svgEl.removeAttribute('style'); svgEl.setAttribute('width','100%'); svgEl.setAttribute('height','100%');
+
+    // Programmatic name and description for screen readers.
+    svgEl.setAttribute('role','img');
+    svgEl.setAttribute('aria-labelledby','oreWf-title oreWf-desc');
+    const NS='http://www.w3.org/2000/svg';
+    const titleEl=document.createElementNS(NS,'title'); titleEl.id='oreWf-title';
+    titleEl.textContent='ORE oncology reasoning workflow tree';
+    const descEl=document.createElementNS(NS,'desc'); descEl.id='oreWf-desc';
+    descEl.textContent='Flow from patient data intake to typed facts, HER2 status gating, breast subtype routing, treatment planning, a safety screen, concordance checking, a data quality gate, trial matching, orchestration, physician sign off, and a gated feedback loop back into the record.';
+    svgEl.insertBefore(descEl, svgEl.firstChild);
+    svgEl.insertBefore(titleEl, svgEl.firstChild);
+
     if(window.svgPanZoom){
-      pz=window.svgPanZoom(svgEl,{ zoomEnabled:true, panEnabled:true, controlIcons:false, fit:true, center:true, minZoom:0.06, maxZoom:18, zoomScaleSensitivity:0.4 });
-      const fit=()=>{stopPlay();pz.resize();pz.fit();pz.center();};
+      pz=window.svgPanZoom(svgEl,{ zoomEnabled:true, panEnabled:true, controlIcons:false, fit:true, center:true, minZoom:0.06, maxZoom:18, zoomScaleSensitivity:0.4, onPan:clearStepping });
+      const fit=()=>{stopPlay();clearStepping();pz.resize();pz.fit();pz.center();};
       document.getElementById('zin').onclick=()=>{stopPlay();pz.zoomIn();};
       document.getElementById('zout').onclick=()=>{stopPlay();pz.zoomOut();};
       document.getElementById('zfit').onclick=fit;
-      window.addEventListener('resize',()=>{pz.resize();pz.fit();pz.center();});
-      document.addEventListener('fullscreenchange',()=>setTimeout(()=>{pz.resize();pz.fit();pz.center();},60));
+      window.addEventListener('resize',()=>{ cur>-1 ? focusNode(steps[cur].id) : (pz.resize(),pz.fit(),pz.center()); });
+      document.addEventListener('fullscreenchange',()=>{ setFullscreenLabel(); setTimeout(()=>{ cur>-1 ? focusNode(steps[cur].id) : (pz.resize(),pz.fit(),pz.center()); },60); });
     }
-    document.getElementById('zfull').onclick=()=>{const c=document.getElementById('stage'); if(!document.fullscreenElement){c.requestFullscreen&&c.requestFullscreen();}else{document.exitFullscreen();}};
-    document.getElementById('next').onclick=()=>{stopPlay();show(cur+1);};
-    document.getElementById('prev').onclick=()=>{stopPlay();show(cur-1);};
-    document.getElementById('play').onclick=()=>{
-      if(timer){stopPlay();return;}
-      document.getElementById('play').innerHTML='&#10073;&#10073;';
-      if(cur<0) show(0);
-      timer=setInterval(()=>{ if(cur>=steps.length-1){stopPlay();return;} show(cur+1); },4200);
-    };
-  }catch(e){ host.innerHTML='<p style="padding:20px;color:#b91c1c">Diagram failed to render: '+(e&&e.message?e.message:e)+'</p>'; }
+
+    // Make mapped nodes clickable to jump to their step.
+    steps.forEach(s=>{ const n=findNode(s.id); if(n) n.classList.add('clickable'); });
+    svgEl.addEventListener('click',(e)=>{
+      const g=e.target.closest && e.target.closest('g.node');
+      if(!g||!g.id) return;
+      let id=g.id.replace(/^flowchart-/,'');
+      id=id.replace(/-\d+$/,'');
+      if(stepIndex[id]!==undefined){ stopPlay(); show(stepIndex[id]); }
+    });
+  }catch(e){
+    host.innerHTML='<p style="padding:20px;color:#b91c1c">Diagram view unavailable, the step text still works. ('+(e&&e.message?e.message:e)+')</p>';
+  }
+
+  // Auto-start the walkthrough at step 1 on load.
+  show(0);
 </script>
+</body>
+</html>
