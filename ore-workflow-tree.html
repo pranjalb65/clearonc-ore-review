@@ -93,6 +93,20 @@
   #panel .bench{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
   #panel .bench .bl{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);margin-right:2px}
   #panel .bench .bp{font-size:11.5px;font-weight:600;border:1px solid #d8e0ea;border-radius:6px;padding:3px 8px;background:#f4f7fb;color:#475569}
+  #panel .deriv{margin:0 0 12px;display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+  #panel .deriv .dl{flex-basis:100%;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);margin-bottom:1px}
+  #panel .deriv .dt{font-size:11.5px;font-weight:600;border-radius:6px;padding:2px 7px;background:#eef1f5;color:#475569;border:1px solid var(--line)}
+  #panel .deriv .dt.data{background:var(--fill-data);border-color:#bcd3f5;color:#1452c9}
+  #panel .deriv .dt.det{background:var(--fill-det);border-color:#bfe3cb;color:#13702f}
+  #panel .deriv .dt.cite{background:#ffffff;border-color:#bcd3f5;color:#1452c9}
+  #panel .deriv .dt.ok{background:var(--fill-det);border-color:#bfe3cb;color:#13702f}
+  #panel .deriv .dt.flag{background:var(--fill-flag);border-color:#f3c9cd;color:var(--red)}
+  #panel .deriv .dt.catch{background:var(--fill-catch);border-color:#f4c6df;color:var(--catch)}
+  #panel .deriv .darr{color:var(--faint);font-size:11px}
+  .legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 16px;font-size:13px;margin:0}
+  .legend .li{display:flex;flex-direction:column;gap:2px;color:var(--muted)}
+  .legend .li .lh{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--ink);font-size:12.5px}
+  .legend .li .ld{font-size:11.5px;color:var(--muted);line-height:1.4}
 </style>
 </head>
 <body>
@@ -107,7 +121,7 @@
   <div class="context">
     <p class="case"><b>This tree is the ORE architecture; the same steps apply to any cancer type. Example:</b> 62F, invasive ductal carcinoma, cT2N1M0 Stage IIB, ER+/PR+, HER2 IHC 3+, ECOG 1, on trastuzumab plus paclitaxel, DPYD untested, no baseline LVEF.</p>
     <div class="legend">
-      <span><span class="sw dec"></span> decision</span><span><span class="sw det"></span> deterministic</span><span><span class="sw data"></span> data</span><span><span class="sw llm"></span> LLM edge</span><span><span class="sw out"></span> output</span><span><span class="sw flag"></span> gap, safety</span><span><span class="sw catch"></span> engine catch</span><span class="note"><b>Reading the colors:</b> green is the deterministic core, each step a cited rule. Amber is the bounded language-model edge (it reads the record, grounds the evidence, and writes the explanation, never a decision). Blue is data, white diamonds are decision points, purple is an output, red marks a safety gap, and rose marks an engine catch, where ORE improves on the recorded plan.</span>
+      <span class="li"><span class="lh"><span class="sw dec"></span> decision</span><span class="ld">A branch point, a question the engine evaluates.</span></span><span class="li"><span class="lh"><span class="sw det"></span> deterministic</span><span class="ld">A cited, rule-based outcome. The core of the engine.</span></span><span class="li"><span class="lh"><span class="sw data"></span> data</span><span class="ld">A record or data fact, the input and the Episode.</span></span><span class="li"><span class="lh"><span class="sw llm"></span> LLM edge</span><span class="ld">The few places a model is used: read, ground, explain. It never decides.</span></span><span class="li"><span class="lh"><span class="sw out"></span> output</span><span class="ld">What ORE produces: the physician view and the patient summary.</span></span><span class="li"><span class="lh"><span class="sw flag"></span> gap, safety</span><span class="ld">A safety gap or a missing fact that needs action.</span></span><span class="li"><span class="lh"><span class="sw catch"></span> engine catch</span><span class="ld">Where ORE improves on the recorded plan.</span></span>
     </div>
   </div>
 
@@ -368,6 +382,34 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     var b=BENCH[id]; if(!b||!b.length) return '';
     return '<div class="bench"><span class="bl">Validated by</span>'+b.map(function(x){return '<span class="bp">'+x+'</span>';}).join('')+'</div>';
   }
+  const DERIV = {
+    IN:[{t:'EHR, HIE, claims, upload',k:'data'},{t:'normalize',k:'det'},{t:'one envelope',k:'ok'}],
+    PARSE:[{t:'raw record',k:'data'},{t:'LLM extract and validate',k:'det'},{t:'typed ClinicalProfile + evidence',k:'ok'}],
+    TERM:[{t:'ICD-10-CM C50.912',k:'data'},{t:'OMOP Maps to',k:'det'},{t:'SNOMED 254837009',k:'ok'}],
+    BQ:[{t:'HER2 IHC 3+',k:'data'},{t:'rule: 3+ is definitive HER2+',k:'det'},{t:'ASCO and CAP HER2',k:'cite'},{t:'open HER2 pathway',k:'ok'}],
+    EPI:[{t:'all typed facts',k:'data'},{t:'merge and stamp provenance',k:'det'},{t:'Episode of Care',k:'ok'}],
+    SUB:[{t:'HER2+ and HR+',k:'data'},{t:'rule: subtype router',k:'det'},{t:'triple-positive model',k:'ok'}],
+    FACTORS:[{t:'ECOG 1, cardiac, organ function',k:'data'},{t:'load into context',k:'det'},{t:'factors for plan and safety',k:'ok'}],
+    ESC:[{t:'N1 node-positive',k:'data'},{t:'rule: node-positive escalates',k:'det'},{t:'dual blockade',k:'ok'}],
+    PPREF:[{t:'HER2+ node-positive Stage IIB',k:'data'},{t:'rule: neoadjuvant dual blockade + taxane',k:'det'},{t:'NeoSphere, FDA label',k:'cite'},{t:'THP or TCHP plan',k:'ok'}],
+    PADAPT:[{t:'surgery pathology',k:'data'},{t:'rule: response-adapted',k:'det'},{t:'KATHERINE, APHINITY',k:'cite'},{t:'T-DM1 or complete HER2',k:'ok'}],
+    CR2:[{t:'recorded trastuzumab + paclitaxel, N1',k:'data'},{t:'rule: node-positive favors dual blockade',k:'det'},{t:'APHINITY, NeoSphere',k:'cite'},{t:'ENHANCE: add pertuzumab',k:'catch'}],
+    SGAP:[{t:'trastuzumab, no baseline LVEF',k:'data'},{t:'rule: cardiotoxic needs baseline and serial LVEF',k:'det'},{t:'FDA boxed warning',k:'cite'},{t:'GAP: obtain LVEF',k:'flag'}],
+    S3T:[{t:'DPYD untested',k:'data'},{t:'rule: matters only with a fluoropyrimidine',k:'det'},{t:'CPIC DPYD',k:'cite'},{t:'conditional, not gating now',k:'ok'}],
+    QUAL:[{t:'fields present vs required',k:'data'},{t:'completeness score',k:'det'},{t:'high confidence, else abstain',k:'ok'}],
+    GAPS:[{t:'missing facts',k:'data'},{t:'rank by impact on the plan',k:'det'},{t:'targeted requests',k:'flag'}],
+    PUBMED:[{t:'HER2+ subtype query',k:'data'},{t:'RAG over the literature index',k:'det'},{t:'APHINITY, KATHERINE',k:'cite'},{t:'grounded explanation',k:'ok'}],
+    TRL:[{t:'phenotype + stage',k:'data'},{t:'eligibility match',k:'det'},{t:'NCT07616427',k:'cite'},{t:'ranked candidates',k:'ok'}],
+    ORCH:[{t:'all step outputs',k:'data'},{t:'de-identify, ground, consensus',k:'det'},{t:'assembled cited result',k:'ok'}],
+    OUT:[{t:'assembled result',k:'data'},{t:'render two views',k:'det'},{t:'physician and patient, cited',k:'ok'}],
+    SIGN:[{t:'physician agree or edit',k:'data'},{t:'labeled signal, eval gate',k:'det'},{t:'next version',k:'ok'}],
+  };
+  function renderDeriv(id){
+    var d=DERIV[id]; if(!d||!d.length) return '';
+    var pills='';
+    for(var i=0;i<d.length;i++){ if(i) pills+='<span class="darr">&#8594;</span>'; pills+='<span class="dt '+(d[i].k||'')+'">'+d[i].t+'</span>'; }
+    return '<div class="deriv"><span class="dl">How ORE arrives here</span>'+pills+'</div>';
+  }
   function renderFlow(flow){
     if(!flow||!flow.length) return '';
     var cap=function(it){return it.c?'<span class="fc">'+it.c+'</span>':'';};
@@ -436,7 +478,7 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     document.getElementById('ptitle').textContent=st.title.replace(/^\d+\.\s*/,'');
     var A=ARCH[st.id]||{};
     if(A.t) document.getElementById('ptitle').textContent=A.t;
-    document.getElementById('pbody').innerHTML=(A.d?'<div class="archline">'+A.d+'</div>':'')+'<div class="incase"><span class="ic">In this case</span> '+st.html+'</div>'+renderFlow(FLOWS[st.id])+renderBench(st.id);
+    document.getElementById('pbody').innerHTML=(A.d?'<div class="archline">'+A.d+'</div>':'')+renderDeriv(st.id)+'<div class="incase"><span class="ic">In this case</span> '+st.html+'</div>'+renderFlow(FLOWS[st.id])+renderBench(st.id);
     prev.disabled = cur===0;
     next.disabled = cur===steps.length-1;
     focusNode(st.id);

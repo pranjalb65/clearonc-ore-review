@@ -93,6 +93,10 @@
   #panel .bench{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
   #panel .bench .bl{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);margin-right:2px}
   #panel .bench .bp{font-size:11.5px;font-weight:600;border:1px solid #d8e0ea;border-radius:6px;padding:3px 8px;background:#f4f7fb;color:#475569}
+  .legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 16px;font-size:13px;margin:0}
+  .legend .li{display:flex;flex-direction:column;gap:2px;color:var(--muted)}
+  .legend .li .lh{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--ink);font-size:12.5px}
+  .legend .li .ld{font-size:11.5px;color:var(--muted);line-height:1.4}
 </style>
 </head>
 <body>
@@ -107,7 +111,7 @@
   <div class="context">
     <p class="case"><b>The same data and knowledge flow runs for every patient, every cancer type, and every source.</b></p>
     <div class="legend">
-      <span><span class="sw dec"></span> decision</span><span><span class="sw det"></span> deterministic</span><span><span class="sw data"></span> data</span><span><span class="sw llm"></span> LLM edge</span><span><span class="sw out"></span> output</span><span><span class="sw flag"></span> gap, safety</span><span><span class="sw catch"></span> engine catch</span><span class="note"><b>Reading the colors:</b> green is the deterministic core, each step a cited rule. Amber is the bounded language-model edge (it reads the record, grounds the evidence, and writes the explanation, never a decision). Blue is data, white diamonds are decision points, purple is an output, red marks a safety gap, and rose marks an engine catch, where ORE improves on the recorded plan.</span>
+      <span class="li"><span class="lh"><span class="sw dec"></span> decision</span><span class="ld">A branch point, a question the engine evaluates.</span></span><span class="li"><span class="lh"><span class="sw det"></span> deterministic</span><span class="ld">A cited, rule-based outcome. The core of the engine.</span></span><span class="li"><span class="lh"><span class="sw data"></span> data</span><span class="ld">A record or data fact, the input and the Episode.</span></span><span class="li"><span class="lh"><span class="sw llm"></span> LLM edge</span><span class="ld">The few places a model is used: read, ground, explain. It never decides.</span></span><span class="li"><span class="lh"><span class="sw out"></span> output</span><span class="ld">What ORE produces: the physician view and the patient summary.</span></span><span class="li"><span class="lh"><span class="sw flag"></span> gap, safety</span><span class="ld">A safety gap or a missing fact that needs action.</span></span><span class="li"><span class="lh"><span class="sw catch"></span> engine catch</span><span class="ld">Where ORE improves on the recorded plan.</span></span>
     </div>
   </div>
 
