@@ -90,6 +90,9 @@
   #panel .archline{font-size:13.5px;color:var(--ink);margin:0 0 12px;padding:0 0 12px;border-bottom:1px dashed var(--line)}
   #panel .incase{font-size:13.3px;line-height:1.55}
   #panel .incase .ic{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--blue);background:#eef4ff;border-radius:5px;padding:2px 7px;margin-right:6px}
+  #panel .bench{margin-top:14px;padding-top:12px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  #panel .bench .bl{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);margin-right:2px}
+  #panel .bench .bp{font-size:11.5px;font-weight:600;border:1px solid #d8e0ea;border-radius:6px;padding:3px 8px;background:#f4f7fb;color:#475569}
 </style>
 </head>
 <body>
@@ -335,6 +338,28 @@ classDef catch fill:#f0ecff,stroke:#6d4aff,color:#0e1622;`;
     OUT:{t:'Output generation',d:'A cited clinician view and a plain-language patient summary are produced.'},
     SIGN:{t:'Sign-off and feedback',d:'A licensed physician signs. Their agree, edit, or reject signal improves the next version, gated, never auto-applied.'},
   };
+  const BENCH = {
+    PARSE:['HealthBench','MedHELM'],
+    TERM:['MedHELM'],
+    BQ:['MTBBench'],
+    FACTORS:['HealthBench'],
+    SUB:['CancerGUIDE'],
+    ESC:['MedGUIDE'],
+    PPREF:['MedGUIDE','CancerGUIDE'],
+    PADAPT:['MedGUIDE'],
+    CR2:['MedGUIDE'],
+    SGAP:['NOHARM','ARISE','HealthBench'],
+    S3T:['CPIC eval (internal)'],
+    PUBMED:['LitXBench'],
+    TRL:['trial-match eval'],
+    ORCH:['MGB JAMA reasoning','HealthBench'],
+    OUT:['HealthBench'],
+    SIGN:['gold-case regression'],
+  };
+  function renderBench(id){
+    var b=BENCH[id]; if(!b||!b.length) return '';
+    return '<div class="bench"><span class="bl">Validated by</span>'+b.map(function(x){return '<span class="bp">'+x+'</span>';}).join('')+'</div>';
+  }
   function renderFlow(flow){
     if(!flow||!flow.length) return '';
     var cap=function(it){return it.c?'<span class="fc">'+it.c+'</span>':'';};
@@ -403,7 +428,7 @@ classDef catch fill:#f0ecff,stroke:#6d4aff,color:#0e1622;`;
     document.getElementById('ptitle').textContent=st.title.replace(/^\d+\.\s*/,'');
     var A=ARCH[st.id]||{};
     if(A.t) document.getElementById('ptitle').textContent=A.t;
-    document.getElementById('pbody').innerHTML=(A.d?'<div class="archline">'+A.d+'</div>':'')+'<div class="incase"><span class="ic">In this case</span> '+st.html+'</div>'+renderFlow(FLOWS[st.id]);
+    document.getElementById('pbody').innerHTML=(A.d?'<div class="archline">'+A.d+'</div>':'')+'<div class="incase"><span class="ic">In this case</span> '+st.html+'</div>'+renderFlow(FLOWS[st.id])+renderBench(st.id);
     prev.disabled = cur===0;
     next.disabled = cur===steps.length-1;
     focusNode(st.id);
