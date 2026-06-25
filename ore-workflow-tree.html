@@ -278,7 +278,7 @@ classDef flag fill:#fcebec,stroke:#b91c1c,color:#0e1622,stroke-width:2px;
 classDef catch fill:#f0ecff,stroke:#6d4aff,color:#0e1622;`;
 
   const steps = [
-    { id:'IN', title:'1. Patient data in', html:'A consuming product (ClearOnc) sends ORE one normalized envelope of the patient record and claims. <div class="tagrow"><span class="t">touchpoint</span></div>' },
+    { id:'IN', title:'1. Patient data in', html:'ClearOnc pulls from the EHR (SMART on FHIR, Xealth), an HIE feed, or claims, or accepts a manual upload (PreDoc), then normalizes them to one envelope. <div class="tagrow"><span class="t">touchpoint</span></div>' },
     { id:'PARSE', title:'2. Parse to typed facts', html:'An LLM extracts the record into typed, validated facts: <b>ER+, PR+, HER2 IHC 3+, cT2N1M0, ECOG 1, trastuzumab, paclitaxel</b>. High-stakes fields are cross-checked by a second model. <div class="tagrow"><span class="t">LLM edge</span></div>' },
     { id:'TERM', title:'3. Terminology', html:'The diagnosis code is normalized: <b>ICD-10-CM C50.912 to SNOMED 254837009</b> (malignant neoplasm of breast). ICD is preserved; SNOMED is what the engines reason over, so the case works for US and international partners.' },
     { id:'BQ', title:'4. HER2 status (biomarker gating)', html:'<b>IHC 3+ is definitively HER2-positive</b>, no reflex ISH needed. IHC 1+ or 0 would not be actionable; <b>2+ triggers reflex ISH</b>. Only a confirmed positive opens a targeted pathway. <div class="tagrow"><span class="t ok">actionable</span></div>' },
@@ -299,8 +299,8 @@ classDef catch fill:#f0ecff,stroke:#6d4aff,color:#0e1622;`;
   ];
 
     const FLOWS = {
-    IN:[{t:'Records + claims',k:'data'},{t:'Normalized envelope',k:'data',c:'one input contract'}],
-    PARSE:[{t:'Raw record',k:'data'},{t:'LLM extraction',k:'llm',c:'dual pass, cross-checked'},{t:'Typed facts',k:'det',c:'ER+, PR+, HER2 3+, cT2N1M0'}],
+    IN:[{t:'Intake channels',k:'data',chips:[{t:'EHR pull (FHIR)'},{t:'HIE feed'},{t:'Manual upload'},{t:'Claims'}]},{t:'Normalized envelope',k:'data',c:'one contract, any source'}],
+    PARSE:[{t:'Raw record',k:'data'},{t:'LLM extraction',k:'llm',c:'dual pass, evidence-linked'},{t:'Clinical profile',k:'det',chips:[{t:'diagnosis + ICD'},{t:'staging TNM'},{t:'biomarkers'},{t:'labs'},{t:'medications'},{t:'procedures'},{t:'imaging'},{t:'performance status'},{t:'comorbidities'}]}],
     TERM:[{t:'ICD-10-CM C50.912',k:'data'},{t:'OMOP Maps to',k:'det'},{t:'SNOMED 254837009',k:'det',c:'the reasoning concept'}],
     BQ:[{t:'HER2 IHC',k:'data'},{t:'Gate on HER2',k:'dec',chips:[{t:'IHC 3+ actionable',k:'det',me:true},{t:'2+ reflex ISH',k:'det'},{t:'0 or 1+ not actionable',k:'det'}]}],
     EPI:[{t:'Typed facts',k:'det'},{t:'Episode of Care',k:'data',c:'triple-positive, Stage IIB, node-positive'}],
@@ -319,8 +319,8 @@ classDef catch fill:#f0ecff,stroke:#6d4aff,color:#0e1622;`;
     SIGN:[{t:'Physician reviews',k:'dec',chips:[{t:'Agree, reinforce',k:'det'},{t:'Edit, correction',k:'det'}]},{t:'Eval gate to next version',k:'det',c:'gated, never auto-applied'}],
   };
   const ARCH = {
-    IN:{t:'Data intake',d:'Any product sends ORE one normalized record. The boundary is disease and product agnostic.'},
-    PARSE:{t:'Structured extraction',d:'A language model turns the raw record into typed, validated facts. One of the few places the model is used.'},
+    IN:{t:'Data intake',d:'Data arrives by EHR pull (SMART on FHIR, Xealth), an HIE feed, claims, or manual upload, and is normalized to one record. The boundary is disease and product agnostic.'},
+    PARSE:{t:'Structured extraction',d:'A language model turns the raw record into one typed clinical profile, with an evidence span recorded for every fact. One of the few places the model is used.'},
     TERM:{t:'Terminology normalization',d:'Source codes map to a standard vocabulary, so the same logic runs across coding systems and countries.'},
     BQ:{t:'Biomarker actionability gate',d:'The engine checks whether a result is definitive enough to open a targeted pathway, or whether it needs a confirmatory test.'},
     EPI:{t:'Episode of Care',d:'Every fact lands in one longitudinal record with its source and a confidence. Every engine reads from this.'},
