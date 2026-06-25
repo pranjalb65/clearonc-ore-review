@@ -42,6 +42,19 @@
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   footer{margin-top:18px;color:var(--muted);font-size:11.5px}
   @media(max-width:760px){.kv{grid-template-columns:1fr}.grid2{grid-template-columns:1fr}}
+  .vby{margin:2px 0 10px;display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .vby .vlbl{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+  .vby .vp{font-size:11px;font-weight:600;border:1px solid #d8e0ea;border-radius:6px;padding:2px 8px;background:#f4f7fb;color:#475569}
+  .tl{margin:4px 0 2px}
+  .tlrow{display:flex;gap:7px;align-items:stretch;flex-wrap:wrap}
+  .tlseg{flex:1;min-width:135px;border:1px solid var(--line);border-radius:10px;padding:9px 11px;background:var(--softs)}
+  .tlseg .ph{font-size:9.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--faint)}
+  .tlseg .ev{font-size:12.5px;font-weight:600;color:var(--ink);margin-top:2px}
+  .tlseg .dt{font-size:11px;color:var(--muted);margin-top:3px}
+  .tlseg.now{border-color:var(--blue);box-shadow:0 0 0 2px rgba(31,111,235,.16);background:var(--softb)}
+  .tlseg .tchips{margin-top:6px;display:flex;flex-wrap:wrap;gap:4px}
+  .tlseg .tc{font-size:10px;font-weight:600;border-radius:5px;padding:1px 6px}
+  .tlseg .tc.flag{background:var(--softr);color:var(--red)} .tlseg .tc.catch{background:#fce7f3;color:#db2777}
 </style>
 
 <div class="wrap">
@@ -53,6 +66,29 @@
   </div>
 
   <div class="scope">This dossier is one worked example of the ORE architecture. The same layers apply to any cancer type; the breast cancer case is the instance shown.</div>
+
+  <section>
+    <div class="sh"><span class="n">T</span><h2>Treatment timeline</h2><span class="badge info">two views</span></div>
+    <p class="lyr"><span class="lbl does">What this layer does</span><span class="gen">ORE builds a timeline from the record: the current episode of care, and the longitudinal history with projected future decision points.</span></p>
+    <p class="casehead"><span class="lbl case">In this case</span></p>
+    <p class="muted" style="margin-bottom:4px"><b>Episode of Care</b>, this breast cancer episode</p>
+    <div class="tl"><div class="tlrow">
+      <div class="tlseg"><div class="ph">Diagnosis</div><div class="ev">IDC, cT2N1M0</div><div class="dt">triple-positive, baseline</div></div>
+      <div class="tlseg now"><div class="ph">Neoadjuvant (now)</div><div class="ev">dual HER2 plus a taxane</div><div class="dt">recorded: trastuzumab + paclitaxel</div><div class="tchips"><span class="tc catch">add pertuzumab</span><span class="tc flag">obtain LVEF</span></div></div>
+      <div class="tlseg"><div class="ph">Surgery</div><div class="ev">resection + pathology</div><div class="dt">response assessed</div></div>
+      <div class="tlseg"><div class="ph">Adjuvant</div><div class="ev">response-adapted</div><div class="dt">T-DM1 if residual, complete HER2 if pCR</div></div>
+      <div class="tlseg"><div class="ph">Endocrine</div><div class="ev">aromatase inhibitor</div><div class="dt">5+ years, HR-positive</div></div>
+      <div class="tlseg"><div class="ph">Surveillance</div><div class="ev">imaging + exams</div><div class="dt">long term</div></div>
+    </div></div>
+    <p class="muted" style="margin:14px 0 4px"><b>Longitudinal patient timeline</b>, history to projected future</p>
+    <div class="tl"><div class="tlrow">
+      <div class="tlseg"><div class="ph">History (past)</div><div class="ev">prior conditions and care</div><div class="dt">comorbidities, baseline organ function</div></div>
+      <div class="tlseg now"><div class="ph">This episode (present)</div><div class="ev">triple-positive breast, in treatment</div><div class="dt">the episode of care above, nested here</div></div>
+      <div class="tlseg"><div class="ph">Projected (future)</div><div class="ev">decision points ahead</div><div class="dt">surgery, adjuvant choice, endocrine duration, surveillance, re-evaluate at recurrence</div></div>
+    </div></div>
+    <p class="cite" style="margin-top:8px">The timeline is built from claims, the EHR pull, and uploads. Future points are projected decision gates, not predictions.</p>
+  </section>
+
 
   <section>
     <div class="sh"><span class="n">1</span><h2>Episode of Care</h2><span class="badge info">canonical record</span></div>
@@ -70,6 +106,7 @@
 
   <section>
     <div class="sh"><span class="n">2</span><h2>Terminology mapping (ICD to SNOMED)</h2><span class="badge ok">normalized</span></div>
+    <p class="vby"><span class="vlbl">Validated by</span><span class="vp">MedHELM</span></p>
     <p class="lyr"><span class="lbl does">What this layer does</span><span class="gen">Source codes map to a standard vocabulary, so the same logic runs across coding systems and countries.</span></p>
     <p class="casehead"><span class="lbl case">In this case</span></p>
     <table>
@@ -86,6 +123,7 @@
 
   <section>
     <div class="sh"><span class="n">3</span><h2>Biomarkers</h2><span class="badge ok">HER2 definitive</span></div>
+    <p class="vby"><span class="vlbl">Validated by</span><span class="vp">MTBBench</span></p>
     <p class="lyr"><span class="lbl does">What this layer does</span><span class="gen">The engine checks whether a result is definitive enough to open a targeted pathway, and requests it if it is absent.</span></p>
     <p class="casehead"><span class="lbl case">In this case</span></p>
     <table>
@@ -102,6 +140,7 @@
 
   <section>
     <div class="sh"><span class="n">4</span><h2>Line of therapy and treatment plan</h2><span class="badge warn">enhancement found</span></div>
+    <p class="vby"><span class="vlbl">Validated by</span><span class="vp">MedGUIDE</span><span class="vp">CancerGUIDE</span></p>
     <p class="lyr"><span class="lbl does">What this layer does</span><span class="gen">A guideline-concordant, cited plan is generated for the determined line and setting.</span></p>
     <p class="casehead"><span class="lbl case">In this case</span></p>
     <p><b>Line:</b> Line 1 (trastuzumab + paclitaxel), derived from the medication record. Treatment-naive prior to this.</p>
@@ -116,6 +155,7 @@
 
   <section>
     <div class="sh"><span class="n">5</span><h2>Concordance assessment</h2><span class="badge warn">partially concordant</span></div>
+    <p class="vby"><span class="vlbl">Validated by</span><span class="vp">MedGUIDE</span></p>
     <p class="lyr"><span class="lbl does">What this layer does</span><span class="gen">Recorded care is checked against the cited standard. Gaps and enhancements are flagged, never silently overridden.</span></p>
     <p class="casehead"><span class="lbl case">In this case</span></p>
     <table>
@@ -131,6 +171,7 @@
 
   <section>
     <div class="sh"><span class="n">6</span><h2>Adverse-event risk</h2><span class="badge flag">monitoring gap</span></div>
+    <p class="vby"><span class="vlbl">Validated by</span><span class="vp">NOHARM</span><span class="vp">ARISE</span><span class="vp">HealthBench</span></p>
     <p class="lyr"><span class="lbl does">What this layer does</span><span class="gen">The engine checks drug-specific risks and required monitoring, and flags any missing baseline test.</span></p>
     <p class="casehead"><span class="lbl case">In this case</span></p>
     <table>
@@ -146,6 +187,7 @@
 
   <section>
     <div class="sh"><span class="n">7</span><h2>Pharmacogenomics (PGx)</h2><span class="badge info">conditional</span></div>
+    <p class="vby"><span class="vlbl">Validated by</span><span class="vp">CPIC eval (internal)</span></p>
     <p class="lyr"><span class="lbl does">What this layer does</span><span class="gen">When a planned drug has a known gene interaction, the engine requires the genotype before dosing.</span></p>
     <p class="casehead"><span class="lbl case">In this case</span></p>
     <p><b>DPYD: untested.</b> Not required for the current trastuzumab + paclitaxel regimen (no fluoropyrimidine). It becomes relevant only if <b>capecitabine</b> is later considered (for example as an alternative in residual disease, or a later line).</p>
@@ -154,6 +196,7 @@
 
   <section>
     <div class="sh"><span class="n">8</span><h2>PubMed evidence, HER2-positive breast specific</h2><span class="badge ok">ranked, verified</span></div>
+    <p class="vby"><span class="vlbl">Validated by</span><span class="vp">LitXBench</span></p>
     <p class="lyr"><span class="lbl does">What this layer does</span><span class="gen">A retrieval layer grounds the explanation. It never overrides a cited decision.</span></p>
     <p class="casehead"><span class="lbl case">In this case</span></p>
     <p class="muted">Ranked by study tier (Phase 3 RCT outranks Phase 2). Each PMID verified on PubMed. Literature grounds the explanation; it does not override the cited deterministic decision.</p>
@@ -173,6 +216,7 @@
 
   <section>
     <div class="sh"><span class="n">9</span><h2>Matching clinical trials (recruiting)</h2><span class="badge ok">live, verified</span></div>
+    <p class="vby"><span class="vlbl">Validated by</span><span class="vp">trial-match eval</span></p>
     <p class="lyr"><span class="lbl does">What this layer does</span><span class="gen">Recruiting trials are matched by phenotype and stage. The engine flags candidates, it does not enroll.</span></p>
     <p class="casehead"><span class="lbl case">In this case</span></p>
     <table>
@@ -189,6 +233,7 @@
 
   <section>
     <div class="sh"><span class="n">10</span><h2>Clinical gaps</h2><span class="badge flag">1 important</span></div>
+    <p class="vby"><span class="vlbl">Validated by</span><span class="vp">internal eval</span></p>
     <p class="lyr"><span class="lbl does">What this layer does</span><span class="gen">Missing facts are ranked by how much each would change the recommendation, then turned into targeted requests.</span></p>
     <p class="casehead"><span class="lbl case">In this case</span></p>
     <table>
@@ -205,12 +250,14 @@
   <div class="grid2">
     <section style="margin-top:0">
       <div class="sh"><span class="n">11</span><h2>Quality and confidence</h2></div>
+    <p class="vby"><span class="vlbl">Validated by</span><span class="vp">gold-case regression</span><span class="vp">calibration</span></p>
       <p class="lyr"><span class="lbl does">What this layer does</span><span class="gen">The engine scores how complete the record is against what the pathway needs, and abstains when it is too thin.</span></p>
       <p class="casehead"><span class="lbl case">In this case</span></p>
       <p>Diagnosis, stage, and the actionable biomarker are documented, so concordance and planning run at <b>high confidence</b>. The plan is provisional pending the baseline LVEF and the dual-blockade decision. Conformance, completeness, and plausibility all pass.</p>
     </section>
     <section style="margin-top:0">
       <div class="sh"><span class="n">12</span><h2>Patient-friendly summary</h2></div>
+    <p class="vby"><span class="vlbl">Validated by</span><span class="vp">HealthBench</span></p>
       <p class="lyr"><span class="lbl does">What this layer does</span><span class="gen">A plain-language summary is produced for the patient.</span></p>
       <p class="casehead"><span class="lbl case">In this case</span></p>
       <p class="muted" style="font-size:12.5px">Your breast cancer is a type that responds to HER2-targeted treatment and to hormone therapy. The recommended plan adds a second HER2 medicine (pertuzumab) because lymph nodes are involved, then surgery, then treatment guided by what the surgery shows. A heart scan should be done before continuing the HER2 medicine. Your care team will confirm every step.</p>
