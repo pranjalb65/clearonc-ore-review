@@ -202,10 +202,10 @@ IREQ -. "re-enter" .-> ISH
 BQ -- "0/1+" --> MOL
 EPI --> CTAG
 CTAG -- breast --> HIST
-HIST --> STG
-STG --> BQ
+HIST --> BQ
 MOL --> GERM
-GERM --> SUB
+GERM --> STG
+STG --> SUB
 CTAG -- other --> MOTH
 SUB -- "HER2+" --> MBR
 SUB -- "HR+/HER2-neg" --> SHR
@@ -330,11 +330,11 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     { id:'TERM', title:'3. Terminology', html:'The diagnosis code is normalized: <b>ICD-10-CM C50.912 to SNOMED 254837009</b> (malignant neoplasm of breast). ICD is preserved; SNOMED is what the engines reason over, so the case works for US and international partners.' },
     { id:'EPI', title:'5. Episode of Care', html:'The canonical, longitudinal record: triple-positive, Stage IIB, node-positive, with provenance and a confidence on every fact. Every engine reads from this.' },
     { id:'HIST', title:'Histology', html:'<b>On file:</b> invasive ductal carcinoma on core biopsy, with hormone-receptor and HER2 staining. Grade documents aggressiveness. If tissue were missing, ORE would request a biopsy.' },
-    { id:'STG', title:'Staging', html:'<b>On file:</b> cT2N1M0, clinical Stage IIB (node-positive), from imaging and exam. <b>ORE concurs</b> with this stage, and notes the pathologic stage will refine it after surgery. If the recorded stage looked inconsistent with the findings (occult metastasis, understaged nodes), ORE would flag a consideration; if imaging were missing, it would request it.' },
-    { id:'BQ', title:'4. HER2 status (biomarker gating)', html:'<b>IHC 3+ is definitively HER2-positive</b>, no reflex ISH needed. IHC 1+ or 0 would not be actionable; <b>2+ triggers reflex ISH</b>. Only a confirmed positive opens a targeted pathway. <div class="tagrow"><span class="t ok">actionable</span></div>' },
+    { id:'BQ', title:'HER2 status (biomarker gating)', html:'<b>IHC 3+ is definitively HER2-positive</b>, no reflex ISH needed. IHC 1+ or 0 would not be actionable; <b>2+ triggers reflex ISH</b>. Only a confirmed positive opens a targeted pathway. <div class="tagrow"><span class="t ok">actionable</span></div>' },
     { id:'MOL', title:'Molecular profile', html:'HER2 IHC 3+ and ER/PR positive are the actionable findings here. Broad NGS and MSI or HRD are not standard for early HER2-positive breast cancer, so their absence is not a gap.' },
     { id:'GERM', title:'Hereditary vs somatic', html:'Germline BRCA is untested. Given the diagnosis, ORE flags it as a consideration, it would affect PARP-inhibitor eligibility and family risk-reduction. Conditional, not gating the current plan.' },
-    { id:'SUB', title:'6. Breast subtype routing', html:'The episode routes to a subtype model, each with its own pathways and AE profile: <b>HER2+ (this case)</b>, HR+/HER2-negative (endocrine + CDK4/6, Oncotype), HER2-low (T-DXd), triple-negative (chemo + IO, BRCA to PARP). This is why ORE is not one generic model.' },
+    { id:'STG', title:'Staging', html:'<b>On file:</b> cT2N1M0, clinical Stage IIB (node-positive), from imaging and exam. <b>ORE concurs</b> with this stage, and notes the pathologic stage will refine it after surgery. If the recorded stage looked inconsistent with the findings (occult metastasis, understaged nodes), ORE would flag a consideration; if imaging were missing, it would request it.' },
+    { id:'SUB', title:'Breast subtype routing', html:'The episode routes to a subtype model, each with its own pathways and AE profile: <b>HER2+ (this case)</b>, HR+/HER2-negative (endocrine + CDK4/6, Oncotype), HER2-low (T-DXd), triple-negative (chemo + IO, BRCA to PARP). This is why ORE is not one generic model.' },
     { id:'FACTORS', title:'7. Patient factors', html:'<b>On file:</b> ECOG 1 (performance), postmenopausal (age 62), treatment-naive (line 1), no major comorbidity, no recorded allergies. <b>Missing or conditional:</b> a baseline LVEF before trastuzumab (a gap), germline BRCA untested (conditional), and renal, hepatic, and marrow labs (assumed adequate, pending). <div class="tagrow"><span class="t ok">on file</span><span class="t flag">LVEF missing</span></div>' },
     { id:'ESC', title:'8. Escalate or de-escalate', html:'<b>Node-positive (N1) to dual HER2 blockade.</b> Node-negative small tumors de-escalate to paclitaxel + trastuzumab (APT). This patient is N1, so dual blockade is indicated. <div class="tagrow"><span class="t">decision</span></div>' },
     { id:'PPREF', title:'9. Preferred plan (generated)', html:'<b>Neoadjuvant trastuzumab + pertuzumab + a taxane, then surgery.</b> Cited: <a href="https://pubmed.ncbi.nlm.nih.gov/22153890/">NeoSphere 22153890</a>; Perjeta FDA neoadjuvant indication (tumor &gt;2 cm or node-positive). <div class="tagrow"><span class="t cite">NeoSphere</span><span class="t cite">FDA label</span></div>' },

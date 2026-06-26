@@ -141,10 +141,10 @@ IREQ -. "re-enter" .-> ISH
 BQ -- "0/1+" --> MOL
 EPI --> CTAG
 CTAG -- breast --> HIST
-HIST --> STG
-STG --> BQ
+HIST --> BQ
 MOL --> GERM
-GERM --> SUB
+GERM --> STG
+STG --> SUB
 CTAG -- other --> MOTH
 SUB -- "HER2+" --> MBR
 SUB -- "HR+/HER2-neg" --> SHR
@@ -428,22 +428,22 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     {a:'TERM', f:'KG', stage:'Intake: terminology', mech:'codes are normalized to the <b>SNOMED and OMOP backbone</b> in the knowledge graph', src:'SNOMED CT, OMOP standard vocabularies'},
     {a:'EPI', f:'EPI', stage:'Episode of Care', mech:'the <b>patient graph</b> every agent and skill reads from', src:'longitudinal record, source and confidence stamped'},
     {a:'HIST', f:'SKILL', stage:'Stage 2: Tissue diagnosis', mech:'a deterministic <b>skill</b> reads the histology, bound to the cited entity and grade rule', src:'WHO Classification of Tumours 5th edition, plus the matching CAP protocol'},
-    {a:'STG', f:'SKILL', stage:'Stage 4: Staging', mech:'the <b>staging-validator skill</b> checks the recorded stage and concurs or flags', src:'AJCC 8th edition (UICC TNM), version-pinned'},
-    {a:'BQ', f:'KG', stage:'Stage 3: Biomarker', mech:'a lookup against the cited <b>HER2 rule</b> in the knowledge graph', src:'ASCO and CAP HER2 guideline, 2023 update'},
-    {a:'MOL', f:'SKILL', stage:'Stage 3: Molecular', mech:'the <b>molecular-interpretation skill</b> tiers any alteration', src:'AMP, ASCO, CAP 2017 tiers, plus OncoKB levels'},
-    {a:'GERM', f:'KG', stage:'Stage 3: Germline', mech:'the <b>germline criteria</b> are a cited rule in the knowledge graph', src:'NCCN Genetic and Familial High-Risk Assessment, v2.2026'},
-    {a:'SUB', f:'SKILL', stage:'Stage 3: Subtype', mech:'deterministic <b>subtype routing</b> selects the model', src:'NCCN Breast Cancer disease panel'},
+    {a:'BQ', f:'KG', stage:'Stage 3: Biomarker workup', mech:'a lookup against the cited <b>HER2 rule</b> in the knowledge graph', src:'ASCO and CAP HER2 guideline, 2023 update'},
+    {a:'MOL', f:'SKILL', stage:'Stage 3: Molecular workup', mech:'the <b>molecular-interpretation skill</b> tiers any alteration', src:'AMP, ASCO, CAP 2017 tiers, plus OncoKB levels'},
+    {a:'GERM', f:'KG', stage:'Stage 3: Hereditary risk', mech:'the <b>germline criteria</b> are a cited rule in the knowledge graph', src:'NCCN Genetic and Familial High-Risk Assessment, v2.2026'},
+    {a:'STG', f:'SKILL', stage:'Stage 4: Staging and risk', mech:'the <b>staging-validator skill</b> checks the recorded stage and concurs or flags', src:'AJCC 8th edition (UICC TNM), version-pinned'},
+    {a:'SUB', f:'SKILL', stage:'Subtype routing', mech:'deterministic <b>subtype routing</b> selects the model from the biomarker-defined subtype', src:'NCCN Breast Cancer disease panel'},
     {a:'FACTORS', f:'EPI', stage:'Cross-cutting: Patient factors', mech:'patient factors are read from the <b>Episode of Care</b>', src:'ECOG performance scale; organ-function thresholds per the drug label'},
     {a:'ESC', f:'SKILL', stage:'Stage 5: Planning', mech:'the <b>escalation skill</b> applies the risk-adapted rule', src:'NCCN Breast Cancer, v1.2026'},
     {a:'PPREF', f:'KG', stage:'Stage 5: Planning', mech:'the regimen is a <b>versioned NCCN rule</b> in the knowledge graph', src:'NCCN Breast Cancer; NeoSphere and the FDA label'},
-    {a:'PADAPT', f:'SKILL', stage:'Stage 7: Response', mech:'a <b>response-adapted skill</b> branches on the surgical pathology', src:'KATHERINE, APHINITY (NCCN-codified)'},
+    {a:'PADAPT', f:'SKILL', stage:'Stage 5: Response-adapted plan', mech:'a <b>response-adapted skill</b> branches the adjuvant plan on the surgical pathology (a Stage 7 read that loops back to planning)', src:'KATHERINE, APHINITY (NCCN-codified)'},
     {a:'CR2', f:'SKILL', stage:'Cross-cutting: Concordance', mech:'the <b>concordance-checker skill</b> compares recorded care to the cited rule', src:'APHINITY, NeoSphere (NCCN Breast Cancer)'},
-    {a:'SGAP', f:'GUARD', stage:'Stage 6: Safety', mech:'a <b>guardrail</b> flags the missing baseline LVEF before trastuzumab', src:'FDA boxed warning (trastuzumab label)'},
-    {a:'S3T', f:'KG', stage:'Stage 6: Pharmacogenomics', mech:'a conditional <b>CPIC rule</b> in the knowledge graph', src:'CPIC DPYD guideline'},
+    {a:'SGAP', f:'GUARD', stage:'Cross-cutting: Safety screen', mech:'a <b>guardrail</b> flags the missing baseline LVEF before trastuzumab', src:'FDA boxed warning (trastuzumab label)'},
+    {a:'S3T', f:'KG', stage:'Cross-cutting: Pharmacogenomics', mech:'a conditional <b>CPIC rule</b> in the knowledge graph', src:'CPIC DPYD guideline'},
     {a:'QUAL', f:'GUARD', stage:'Cross-cutting: Data sufficiency', mech:'the <b>cite-or-abstain guardrail</b>: enough to decide, or abstain', src:'gold-case regression and calibration'},
     {a:'GAPS', f:'HANDOFF', stage:'Cross-cutting: Gaps', mech:'abstain and <b>hand off</b>, or request the missing data', src:'internal completeness eval'},
     {a:'PUBMED', f:'RAG', stage:'Evidence grounding', mech:'<b>RAG</b> over the pgvector literature index grounds the explanation', src:'literature index; grounding evaluated on LitXBench'},
-    {a:'TRL', f:'SKILL', stage:'Stage 5: Trials', mech:'the <b>trial-matcher skill</b> matches protocol eligibility', src:'ClinicalTrials.gov protocol eligibility, by NCT and version'},
+    {a:'TRL', f:'SKILL', stage:'Stage 5: Trial options', mech:'the <b>trial-matcher skill</b> matches protocol eligibility', src:'ClinicalTrials.gov protocol eligibility, by NCT and version'},
     {a:'ORCH', f:'ORCH', stage:'Orchestration', mech:'the <b>orchestrator</b> routes the agents and the multi-model council', src:'MGB JAMA reasoning, HealthBench'},
     {a:'OUT', f:'OUT', stage:'Output', mech:'the <b>cited output</b>: physician view and patient summary', src:'output quality on HealthBench'},
     {a:'SIGN', f:'SIGN', stage:'Sign-off and learning', mech:'the physician <b>signs</b>; edits become labeled cases, gated by <b>evals</b> into the next version', src:'gold-case regression gate'},
@@ -465,9 +465,10 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     const ns=[...svgEl.querySelectorAll('g.node')];
     return ns.find(e=>e.id && (e.id.indexOf('-'+id+'-')>-1 || e.id.endsWith('-'+id))) || null;
   }
-  // The glowing cluster fills this fraction of the pane, leaving margin so the
-  // nodes just before and after stay visible.
-  const FILL=0.62;
+  // The glowing cluster fills this fraction of the pane, leaving margin, so the
+  // relevant decision structure reads clearly and the nodes before and after
+  // stay visible.
+  const FILL=0.72;
   function clusterRects(d, ids){
     const rects=[];
     ids.forEach(id=>{ const n=findNode(d.svgEl, id); if(n){ const r=n.getBoundingClientRect(); if(r.width>2) rects.push(r); } });
@@ -478,6 +479,28 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     rects.forEach(x=>{ if(x.left<l)l=x.left; if(x.top<t)t=x.top; if(x.right>r)r=x.right; if(x.bottom>b)b=x.bottom; });
     return {width:r-l,height:b-t,cx:(l+r)/2,cy:(t+b)/2};
   }
+  // Parse the mermaid source into a directed adjacency map, so each step can show
+  // the focused node together with what flows into and out of it.
+  function buildAdj(graph){
+    const out={}, inn={};
+    graph.split('\n').forEach(raw=>{
+      if(raw.indexOf('>')<0) return;
+      if(/classDef|subgraph|direction|^\s*end\b/.test(raw)) return;
+      let s=raw.replace(/\[\(.*?\)\]/g,' ').replace(/\{.*?\}/g,' ').replace(/\[.*?\]/g,' ').replace(/\(.*?\)/g,' ');
+      s=s.replace(/"[^"]*"/g,' ').replace(/\|[^|]*\|/g,' ').replace(/:::[A-Za-z0-9_]+/g,' ');
+      s=s.replace(/[-.>=]{2,}/g,' |> ');
+      const seg=s.split('|>').map(p=>{ const m=p.match(/[A-Za-z][A-Za-z0-9_]*/); return m?m[0]:null; }).filter(Boolean);
+      for(let i=0;i+1<seg.length;i++){ const a=seg[i], b=seg[i+1]; if(a===b) continue; (out[a]=out[a]||[]).push(b); (inn[b]=inn[b]||[]).push(a); }
+    });
+    return {out,inn};
+  }
+  function neigh(adj, id, maxIn, maxOut){
+    if(!adj) return [];
+    const r=[];
+    (adj.out[id]||[]).slice(0,maxOut).forEach(x=>{ if(r.indexOf(x)<0)r.push(x); });
+    (adj.inn[id]||[]).slice(0,maxIn).forEach(x=>{ if(r.indexOf(x)<0)r.push(x); });
+    return r;
+  }
   async function mkDiagram(graph, mountId, idprefix, maxZ){
     const { svg } = await mermaid.render(idprefix, graph);
     const host=document.getElementById(mountId); host.innerHTML=svg;
@@ -485,7 +508,7 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     const stage=host.parentElement;
     let pz=null;
     try{ if(window.svgPanZoom) pz=window.svgPanZoom(svgEl,{zoomEnabled:true,panEnabled:true,controlIcons:false,fit:true,center:true,minZoom:0.05,maxZoom:16,zoomScaleSensitivity:0.4}); }catch(e){}
-    return {svgEl,pz,stage,maxZ:maxZ||2.6};
+    return {svgEl,pz,stage,maxZ:maxZ||5,adj:buildAdj(graph)};
   }
   function focusIn(d, id, rel){
     if(!d||!d.svgEl) return;
@@ -495,6 +518,8 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     n.classList.add('focus');
     const ids=[id];
     (rel||[]).forEach(rid=>{ if(rid!==id){ const rn=findNode(d.svgEl, rid); if(rn){ rn.classList.add('rel'); ids.push(rid); } } });
+    // add the focused node's immediate graph neighbors so the local decision structure stays in view
+    neigh(d.adj, id, 2, 3).forEach(rid=>{ if(ids.indexOf(rid)<0){ const rn=findNode(d.svgEl, rid); if(rn){ rn.classList.add('rel'); ids.push(rid); } } });
     d.svgEl.classList.add('stepping');
     // Zoom so the whole glowing cluster fits with margin, so the nodes before
     // and after it stay in view rather than being cut off.
@@ -541,8 +566,8 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
   (async()=>{
     mermaid.initialize({ startOnLoad:false, theme:'base', themeVariables:{ fontFamily:'-apple-system, Segoe UI, Roboto, sans-serif', fontSize:'13px', lineColor:'#9aa7b6', edgeLabelBackground:'#ffffff' }, flowchart:{ nodeSpacing:30, rankSpacing:52, htmlLabels:true, useMaxWidth:false, curve:'basis', padding:8 } });
     try{
-      A=await mkDiagram(ARCH_GRAPH,'diagA','syncArchX',2.6);
-      B=await mkDiagram(AI_GRAPH,'diagB','syncAIX',2.0);
+      A=await mkDiagram(ARCH_GRAPH,'diagA','syncArchX',5.5);
+      B=await mkDiagram(AI_GRAPH,'diagB','syncAIX',4);
     }catch(e){ document.getElementById('diagA').innerHTML='<p style="padding:16px;color:#b91c1c">Render failed: '+(e&&e.message?e.message:e)+'</p>'; }
     document.getElementById('snext').onclick=()=>{stopPlay();show(cur+1);};
     document.getElementById('sprev').onclick=()=>{stopPlay();show(cur-1);};
