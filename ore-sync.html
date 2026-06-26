@@ -1,0 +1,331 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>ORE Architecture and Data Flow, synced</title>
+<style>
+  :root{--ink:#0e1622;--muted:#5b6b7a;--faint:#8595a4;--line:#e4e9ef;--bg:#eef1f6;--panel:#fff;--blue:#1f6feb;--green:#15803d;--amber:#b45309;--violet:#6d4aff;--slate:#64748b;--red:#b91c1c}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .app{display:flex;flex-direction:column;height:100vh}
+  .bar{flex:none;height:42px;display:flex;align-items:center;gap:10px;padding:0 16px;background:#11213b;color:#fff}
+  .bar b{font-weight:700}.bar .tag{font-size:11.5px;color:#9fc1ff}
+  .panes{flex:1;display:flex;min-height:0}
+  .pane{flex:1;min-width:0;display:flex;flex-direction:column;border-right:1px solid var(--line)}
+  .pane:last-child{border-right:0}
+  .paneh{flex:none;height:30px;display:flex;align-items:center;gap:7px;padding:0 12px;font-size:12px;font-weight:700;color:var(--slate);background:#f7f9fc;border-bottom:1px solid var(--line)}
+  .paneh .d{width:8px;height:8px;border-radius:50%}.paneh .d.a{background:var(--blue)}.paneh .d.b{background:var(--amber)}
+  .stage{flex:1;position:relative;background:var(--panel);overflow:hidden}
+  .stage>div{width:100%;height:100%}
+  .stage svg{width:100%;height:100%;display:block;cursor:grab}.stage svg:active{cursor:grabbing}
+  .stage svg .node rect{rx:8px;ry:8px}
+  .stage svg .node foreignObject{overflow:visible}
+  .stage svg .edgeLabel,.stage svg .edgeLabel foreignObject{overflow:visible}
+  .stage svg .nodeLabel{font-weight:600}
+  .stage svg .node small{font-weight:400;font-size:0.82em;opacity:.66}
+  .stage svg g.node.focus rect,.stage svg g.node.focus polygon{stroke:var(--blue)!important;stroke-width:3.2px!important}
+  .stage svg g.node.focus{filter:drop-shadow(0 0 0 2px #fff) drop-shadow(0 0 7px rgba(31,111,235,.55))}
+  .stage svg.stepping g.node:not(.focus){opacity:.32;transition:opacity .2s}
+  .stepbar{flex:none;min-height:78px;display:flex;align-items:center;gap:16px;padding:10px 16px;background:var(--panel);border-top:1px solid var(--line)}
+  .stepbar .info{flex:1;min-width:0}
+  .stepbar .step{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--blue)}
+  .stepbar h2{font-size:16px;margin:2px 0 3px;letter-spacing:-.01em}
+  .stepbar .note{font-size:12.5px;color:var(--muted)}.stepbar .note b{color:var(--ink)}
+  .stepbar .ctrls{flex:none;display:flex;gap:8px}
+  .stepbar button{border:1px solid var(--line);background:#f6f8fb;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer}
+  .stepbar button:hover:not(:disabled){background:#eaf0f7}.stepbar button:disabled{opacity:.45;cursor:default}
+  .stepbar button.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .stepbar .play{padding:9px 12px}
+  .stepbar .fitb{padding:9px 12px}
+  .embed .bar{display:none}
+</style>
+</head>
+<body>
+<script>try{if(window.self!==window.top)document.documentElement.classList.add('embed')}catch(e){document.documentElement.classList.add('embed')}</script>
+<div class="app">
+  <div class="bar"><b>ORE</b> <span class="tag">Architecture and Data Flow, synced</span></div>
+  <div class="panes">
+    <div class="pane">
+      <div class="paneh"><span class="d a"></span> Architecture, how ORE reasons</div>
+      <div class="stage"><div id="diagA"></div></div>
+    </div>
+    <div class="pane">
+      <div class="paneh"><span class="d b"></span> Data and AI flow, how it runs</div>
+      <div class="stage"><div id="diagB"></div></div>
+    </div>
+  </div>
+  <div class="stepbar">
+    <div class="info">
+      <div class="step" id="sstep">Synced walkthrough</div>
+      <h2 id="stitle">Press Next to begin</h2>
+      <div class="note" id="snote">Each step highlights the reasoning node on the left and the data or AI mechanism it uses on the right.</div>
+    </div>
+    <div class="ctrls">
+      <button id="sfit" class="fitb" title="Fit both">Fit both</button>
+      <button id="sprev">&#9664; Prev</button>
+      <button id="splay" class="play" title="Auto-play">&#9654;</button>
+      <button id="snext" class="primary">Next &#9654;</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  const ARCH_GRAPH = `flowchart LR
+IN["Data intake<br/><small>EHR, HIE, claims, upload</small>"]:::data
+PARSE["Structured extraction<br/><small>ER+, PR+, HER2 3+</small>"]:::llm
+TERM["Terminology normalize<br/><small>C50.912 to SNOMED</small>"]:::data
+BQ{"Primary biomarker gate<br/><small>HER2 IHC</small>"}:::dec
+ISH["Equivocal to reflex test<br/><small>IHC 2+ to ISH</small>"]:::det
+EPI["Episode of Care<br/><small>triple-positive, Stage IIB</small>"]:::data
+CTAG{"Cancer type<br/><small>breast</small>"}:::dec
+MOTH["Other cancer models<br/><small>NSCLC, CRC, and so on</small>"]:::det
+SUB{"Disease subtype<br/><small>breast, HER2+</small>"}:::dec
+MBR["Subtype model<br/><small>breast HER2+</small>"]:::det
+SHR["Subtype model<br/><small>HR+, HER2-neg</small>"]:::det
+SHL["Subtype model<br/><small>HER2-low</small>"]:::det
+STN["Subtype model<br/><small>triple-negative</small>"]:::det
+IN --> PARSE --> TERM --> EPI
+BQ -- "IHC 3+" --> SUB
+BQ -- "IHC 2+" --> ISH --> SUB
+BQ -- "0/1+" --> SUB
+EPI --> CTAG
+CTAG -- breast --> BQ
+CTAG -- other --> MOTH
+SUB -- "HER2+" --> MBR
+SUB -- "HR+/HER2-neg" --> SHR
+SUB -- "HER2-low" --> SHL
+SUB -- "TNBC" --> STN
+subgraph FACT["Patient factors weighed"]
+  FACTORS["Patient factors<br/><small>ECOG 1, cardiac, organ fn, comorbidity</small>"]:::det
+end
+MBR --> FACTORS
+subgraph PLAN["Treatment planning"]
+  INTENT{"Setting and intent<br/><small>early-stage, curative</small>"}:::dec
+  ESC{"Nodal or risk?<br/><small>node-positive N1</small>"}:::dec
+  PDE["De-escalate<br/><small>APT, node-negative</small>"]:::det
+  PPREF["Preferred regimen<br/><small>dual blockade + taxane</small>"]:::det
+  PADAPT{"Response-adapted?<br/><small>pathology at surgery</small>"}:::dec
+  PTDM1["Residual disease<br/><small>T-DM1</small>"]:::det
+  PCOMP["pCR path<br/><small>complete HER2</small>"]:::det
+  PENDO["Endocrine therapy<br/><small>AI, HR-positive</small>"]:::det
+  LOCO["Locoregional<br/><small>surgery + radiation</small>"]:::det
+  MDT["Tumor board<br/><small>multidisciplinary</small>"]:::det
+  SUPP["Supportive care<br/><small>palliative</small>"]:::det
+  INTENT --> ESC
+  ESC -- "node-positive" --> PPREF
+  ESC -- "node-negative" --> PDE
+  PPREF --> PADAPT
+  PADAPT -- residual --> PTDM1
+  PADAPT -- pCR --> PCOMP
+  PPREF --> PENDO
+  PPREF --> LOCO
+  PPREF --> MDT
+  PPREF --> SUPP
+end
+FACTORS --> INTENT
+subgraph SAFE["Safety screen"]
+  S1{"Cardiotoxic, LVEF ok?<br/><small>trastuzumab</small>"}:::dec
+  SGAP["Safety gap<br/><small>baseline LVEF missing</small>"]:::flag
+  S2{"Anthracycline used?<br/><small>interaction check</small>"}:::dec
+  S2OK["Avoid combination<br/><small>none recorded</small>"]:::det
+  S3{"Fluoropyrimidine?<br/><small>PGx gate</small>"}:::dec
+  S3NA["Not gating<br/><small>DPYD n/a now</small>"]:::det
+  S3T["Conditional PGx test<br/><small>DPYD if capecitabine</small>"]:::det
+  S4{"Organ function ok?<br/><small>renal, hepatic, marrow</small>"}:::dec
+  S5{"Interactions, allergies?<br/><small>screen</small>"}:::dec
+  S1 -- "no LVEF" --> SGAP
+  S2 -- none --> S2OK
+  S3 -- "no FP" --> S3NA
+  S3 -- "if added" --> S3T
+end
+FACTORS --> S1
+PPREF --> S1
+subgraph CONC["Concordance"]
+  CR1{"Targeted therapy present?<br/><small>trastuzumab</small>"}:::dec
+  CC1["Concordant<br/><small>HER2 therapy given</small>"]:::det
+  CR2{"Dual blockade for N+?<br/><small>pertuzumab</small>"}:::dec
+  CC2["Engine catch<br/><small>add pertuzumab</small>"]:::catch
+  CR3{"Endocrine for HR+?<br/><small>aromatase inhibitor</small>"}:::dec
+  CC3["Pending<br/><small>plan endocrine</small>"]:::det
+  CR1 -- yes --> CC1
+  CR1 --> CR2
+  CR2 -- no --> CC2
+  CR2 --> CR3
+  CR3 -- "not yet" --> CC3
+end
+MBR --> CR1
+QUAL{"Data sufficient?<br/><small>documented here</small>"}:::dec
+QHI["High confidence<br/><small>proceed</small>"]:::det
+QABS["Abstain<br/><small>to tumor board</small>"]:::flag
+GAPS["Clinical gaps<br/><small>LVEF, pertuzumab</small>"]:::flag
+TRL["Trial match<br/><small>NCT07616427</small>"]:::det
+TRG["Triage<br/><small>SLA + acuity</small>"]:::det
+PUBMED["Evidence grounding<br/><small>HER2+ trials</small>"]:::llm
+MBR --> QUAL
+QUAL -- yes --> QHI
+QUAL -- thin --> QABS
+MBR --> GAPS
+MBR --> TRL
+MBR --> TRG
+ORCH["Orchestration<br/><small>multi-model consensus</small>"]:::llm
+OUT["Outputs<br/><small>physician + patient</small>"]:::out
+SIGN{"Physician signs<br/><small>review and edit</small>"}:::dec
+FBP["Reinforce<br/><small>agree</small>"]:::det
+FBE["Correction<br/><small>edit</small>"]:::det
+GATE["Eval gate<br/><small>next version</small>"]:::det
+PPREF --> ORCH
+PTDM1 --> ORCH
+PCOMP --> ORCH
+PENDO --> ORCH
+LOCO --> ORCH
+MDT --> ORCH
+SUPP --> ORCH
+PDE --> ORCH
+CC1 --> ORCH
+CC2 --> ORCH
+CC3 --> ORCH
+SGAP --> ORCH
+S2OK --> ORCH
+S3NA --> ORCH
+S3T --> ORCH
+GAPS --> ORCH
+QHI --> ORCH
+QABS --> ORCH
+TRL --> ORCH
+TRG --> ORCH
+PUBMED --> ORCH
+ORCH --> OUT --> SIGN
+SIGN -- agree --> FBP
+SIGN -- edit --> FBE
+FBP --> GATE
+FBE --> GATE
+GATE -.->|improves| EPI
+classDef data fill:#eef4ff,stroke:#1f6feb,color:#0e1622;
+classDef det fill:#e7f6ec,stroke:#15803d,color:#0e1622;
+classDef llm fill:#fdf1e3,stroke:#b45309,color:#0e1622,stroke-dasharray:4 2;
+classDef out fill:#f0ecff,stroke:#6d4aff,color:#0e1622;
+classDef dec fill:#ffffff,stroke:#64748b,color:#0e1622;
+classDef flag fill:#fcebec,stroke:#b91c1c,color:#0e1622,stroke-width:2px;
+classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
+  const FLOW_GRAPH = `flowchart LR
+EHR["EHR pull: SMART on FHIR, Xealth"]:::data
+HIE["HIE feed"]:::data
+CLM["Claims"]:::data
+MAN["Manual upload: PreDoc"]:::data
+NORM["Normalize to ClinicalProfile"]:::det
+EPI["Episode of Care"]:::data
+EHR --> NORM
+HIE --> NORM
+CLM --> NORM
+MAN --> NORM
+NORM --> EPI
+EPI --> PIPE["ORE pipeline (the decision tree)"]:::det
+PIPE --> COMP{"Data sufficient?"}:::dec
+COMP -- thin --> ASK["Request data, follow-up"]:::flag
+ASK -.-> NORM
+COMP -- enough --> DEC["Deterministic rule lookup"]:::det
+PIPE --> RAG["RAG retrieval, evidence"]:::llm
+DEC --> KB[("Supabase knowledge tables")]:::data
+RAG --> VEC[("Supabase pgvector, literature")]:::data
+DEC --> LLM["LLM edge: de-identify, explain, consensus"]:::llm
+RAG --> LLM
+LLM --> OUT["Cited physician and patient output"]:::out
+OUT --> SIGN{"Physician signs"}:::dec
+SIGN --> FB["Feedback, gated"]:::det
+FB --> KB
+subgraph KNOW["Knowledge ingestion, continuous and gated"]
+  API["Source APIs: ClinicalTrials.gov, DailyMed, CIViC, CPIC, PubMed"]:::data
+  ING["Normalize and version snapshot"]:::det
+  GATE["Eval and benchmark gate"]:::det
+  API --> ING --> GATE
+end
+GATE --> KB
+GATE --> VEC
+classDef data fill:#eef4ff,stroke:#1f6feb,color:#0e1622;
+classDef det fill:#e7f6ec,stroke:#15803d,color:#0e1622;
+classDef llm fill:#fdf1e3,stroke:#b45309,color:#0e1622,stroke-dasharray:4 2;
+classDef out fill:#f0ecff,stroke:#6d4aff,color:#0e1622;
+classDef dec fill:#ffffff,stroke:#64748b,color:#0e1622;
+classDef flag fill:#fcebec,stroke:#b91c1c,color:#0e1622,stroke-width:2px;
+classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
+  // each step: a = architecture node id, f = data-flow node id, t = title, n = the link
+  const STEPS = [
+    {a:'IN', f:'NORM', t:'Data intake', n:'lands in the normalize stage'},
+    {a:'PARSE', f:'NORM', t:'Structured extraction', n:'the LLM extraction inside normalize'},
+    {a:'TERM', f:'NORM', t:'Terminology', n:'code mapping inside normalize'},
+    {a:'EPI', f:'EPI', t:'Episode of Care', n:'the canonical record every engine reads'},
+    {a:'BQ', f:'DEC', t:'Primary biomarker gate', n:'a deterministic rule lookup against the Supabase knowledge tables'},
+    {a:'SUB', f:'DEC', t:'Subtype model', n:'deterministic routing from the knowledge base'},
+    {a:'FACTORS', f:'EPI', t:'Patient factors', n:'read from the Episode'},
+    {a:'ESC', f:'DEC', t:'Risk-adapted intensity', n:'a cited rule lookup'},
+    {a:'PPREF', f:'DEC', t:'Plan generation', n:'cited rules from the knowledge base'},
+    {a:'PADAPT', f:'DEC', t:'Response-adapted', n:'a cited rule lookup'},
+    {a:'CR2', f:'DEC', t:'Concordance', n:'recorded care checked against cited rules'},
+    {a:'SGAP', f:'DEC', t:'Safety screen', n:'adverse-event rules from the knowledge base'},
+    {a:'S3T', f:'DEC', t:'Pharmacogenomics', n:'CPIC rules from the knowledge base'},
+    {a:'QUAL', f:'COMP', t:'Data sufficiency', n:'the completeness gate'},
+    {a:'GAPS', f:'ASK', t:'Gap and follow-up', n:'the data-request loop back to the sources'},
+    {a:'PUBMED', f:'RAG', t:'Evidence grounding', n:'RAG retrieval over the pgvector literature index'},
+    {a:'TRL', f:'DEC', t:'Trial match', n:'eligibility matched against the trial knowledge'},
+    {a:'ORCH', f:'LLM', t:'Orchestration', n:'the LLM edge: de-identify, explain, consensus'},
+    {a:'OUT', f:'OUT', t:'Outputs', n:'the cited physician and patient views'},
+    {a:'SIGN', f:'FB', t:'Sign-off and feedback', n:'gated feedback back into the knowledge base'},
+  ];
+
+  function findNode(svgEl, id){
+    if(!svgEl) return null;
+    const ns=[...svgEl.querySelectorAll('g.node')];
+    return ns.find(e=>e.id && (e.id.indexOf('-'+id+'-')>-1 || e.id.endsWith('-'+id))) || null;
+  }
+  async function mkDiagram(graph, mountId, idprefix){
+    const { svg } = await mermaid.render(idprefix, graph);
+    const host=document.getElementById(mountId); host.innerHTML=svg;
+    const svgEl=host.querySelector('svg'); svgEl.removeAttribute('style'); svgEl.setAttribute('width','100%'); svgEl.setAttribute('height','100%');
+    const stage=host.parentElement;
+    let pz=null;
+    try{ if(window.svgPanZoom) pz=window.svgPanZoom(svgEl,{zoomEnabled:true,panEnabled:true,controlIcons:false,fit:true,center:true,minZoom:0.05,maxZoom:16,zoomScaleSensitivity:0.4}); }catch(e){}
+    return {svgEl,pz,stage};
+  }
+  function focusIn(d, id){
+    if(!d||!d.svgEl) return;
+    d.svgEl.querySelectorAll('g.node.focus').forEach(e=>e.classList.remove('focus'));
+    if(!d.pz) return;
+    const n=findNode(d.svgEl, id); if(!n) return;
+    n.classList.add('focus'); d.svgEl.classList.add('stepping');
+    try{ const sR=d.stage.getBoundingClientRect(), nR=n.getBoundingClientRect(); if(nR.width>4){ const tz=d.pz.getZoom()*(sR.width*0.4/nR.width); d.pz.zoom(Math.max(0.15,Math.min(tz,12))); } }catch(e){}
+    requestAnimationFrame(()=>{ try{ const s=d.stage.getBoundingClientRect(), r=n.getBoundingClientRect(); const p=d.pz.getPan(); d.pz.pan({x:p.x+(s.left+s.width/2-(r.left+r.width/2)), y:p.y+(s.top+s.height/2-(r.top+r.height/2))}); }catch(e){} });
+  }
+  let A=null,B=null,cur=-1,timer=null;
+  function show(i){
+    cur=Math.max(0,Math.min(STEPS.length-1,i)); const st=STEPS[cur];
+    document.getElementById('sstep').textContent='Step '+(cur+1)+' of '+STEPS.length;
+    document.getElementById('stitle').textContent=st.t;
+    document.getElementById('snote').innerHTML='On the right, in the data and AI flow: <b>'+st.n+'</b>';
+    document.getElementById('sprev').disabled=cur===0;
+    document.getElementById('snext').disabled=cur===STEPS.length-1;
+    focusIn(A, st.a); focusIn(B, st.f);
+  }
+  function stopPlay(){ if(timer){clearInterval(timer);timer=null;document.getElementById('splay').innerHTML='&#9654;';} }
+  function fitBoth(){ stopPlay(); [A,B].forEach(d=>{ if(d&&d.pz){ d.svgEl.classList.remove('stepping'); d.svgEl.querySelectorAll('g.node.focus').forEach(e=>e.classList.remove('focus')); d.pz.resize();d.pz.fit();d.pz.center(); } }); }
+
+  (async()=>{
+    mermaid.initialize({ startOnLoad:false, theme:'base', themeVariables:{ fontFamily:'-apple-system, Segoe UI, Roboto, sans-serif', fontSize:'13px', lineColor:'#9aa7b6', edgeLabelBackground:'#ffffff' }, flowchart:{ nodeSpacing:30, rankSpacing:50, htmlLabels:true, useMaxWidth:false, curve:'basis', padding:8 } });
+    try{
+      A=await mkDiagram(ARCH_GRAPH,'diagA','syncArch');
+      B=await mkDiagram(FLOW_GRAPH,'diagB','syncFlow');
+    }catch(e){ document.getElementById('diagA').innerHTML='<p style="padding:16px;color:#b91c1c">Render failed: '+(e&&e.message?e.message:e)+'</p>'; }
+    document.getElementById('snext').onclick=()=>{stopPlay();show(cur+1);};
+    document.getElementById('sprev').onclick=()=>{stopPlay();show(cur-1);};
+    document.getElementById('sfit').onclick=fitBoth;
+    document.getElementById('splay').onclick=()=>{ if(timer){stopPlay();return;} document.getElementById('splay').innerHTML='&#10073;&#10073;'; if(cur<0)show(0); timer=setInterval(()=>{ if(cur>=STEPS.length-1){stopPlay();return;} show(cur+1); },4200); };
+    window.addEventListener('resize',()=>{ if(cur>-1){ focusIn(A,STEPS[cur].a); focusIn(B,STEPS[cur].f); } });
+    show(0);
+  })();
+</script>
+</body>
+</html>
