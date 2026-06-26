@@ -465,14 +465,27 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     const ns=[...svgEl.querySelectorAll('g.node')];
     return ns.find(e=>e.id && (e.id.indexOf('-'+id+'-')>-1 || e.id.endsWith('-'+id))) || null;
   }
-  async function mkDiagram(graph, mountId, idprefix, factor){
+  // The glowing cluster fills this fraction of the pane, leaving margin so the
+  // nodes just before and after stay visible.
+  const FILL=0.62;
+  function clusterRects(d, ids){
+    const rects=[];
+    ids.forEach(id=>{ const n=findNode(d.svgEl, id); if(n){ const r=n.getBoundingClientRect(); if(r.width>2) rects.push(r); } });
+    return rects;
+  }
+  function unionBox(rects){
+    let l=Infinity,t=Infinity,r=-Infinity,b=-Infinity;
+    rects.forEach(x=>{ if(x.left<l)l=x.left; if(x.top<t)t=x.top; if(x.right>r)r=x.right; if(x.bottom>b)b=x.bottom; });
+    return {width:r-l,height:b-t,cx:(l+r)/2,cy:(t+b)/2};
+  }
+  async function mkDiagram(graph, mountId, idprefix, maxZ){
     const { svg } = await mermaid.render(idprefix, graph);
     const host=document.getElementById(mountId); host.innerHTML=svg;
     const svgEl=host.querySelector('svg'); svgEl.removeAttribute('style'); svgEl.setAttribute('width','100%'); svgEl.setAttribute('height','100%');
     const stage=host.parentElement;
     let pz=null;
     try{ if(window.svgPanZoom) pz=window.svgPanZoom(svgEl,{zoomEnabled:true,panEnabled:true,controlIcons:false,fit:true,center:true,minZoom:0.05,maxZoom:16,zoomScaleSensitivity:0.4}); }catch(e){}
-    return {svgEl,pz,stage,factor};
+    return {svgEl,pz,stage,maxZ:maxZ||2.6};
   }
   function focusIn(d, id, rel){
     if(!d||!d.svgEl) return;
@@ -480,10 +493,29 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     if(!d.pz) return;
     const n=findNode(d.svgEl, id); if(!n){ d.svgEl.classList.remove('stepping'); return; }
     n.classList.add('focus');
-    (rel||[]).forEach(rid=>{ if(rid!==id){ const rn=findNode(d.svgEl, rid); if(rn) rn.classList.add('rel'); } });
+    const ids=[id];
+    (rel||[]).forEach(rid=>{ if(rid!==id){ const rn=findNode(d.svgEl, rid); if(rn){ rn.classList.add('rel'); ids.push(rid); } } });
     d.svgEl.classList.add('stepping');
-    try{ const sR=d.stage.getBoundingClientRect(), nR=n.getBoundingClientRect(); if(nR.width>4){ const tz=d.pz.getZoom()*(sR.width*(d.factor||0.3)/nR.width); d.pz.zoom(Math.max(0.12,Math.min(tz,12))); } }catch(e){}
-    requestAnimationFrame(()=>{ try{ const s=d.stage.getBoundingClientRect(), r=n.getBoundingClientRect(); const p=d.pz.getPan(); d.pz.pan({x:p.x+(s.left+s.width/2-(r.left+r.width/2)), y:p.y+(s.top+s.height/2-(r.top+r.height/2))}); }catch(e){} });
+    // Zoom so the whole glowing cluster fits with margin, so the nodes before
+    // and after it stay in view rather than being cut off.
+    try{
+      const sR=d.stage.getBoundingClientRect();
+      const bb=unionBox(clusterRects(d, ids));
+      if(bb.width>2){
+        let z=d.pz.getZoom()*Math.min(sR.width*FILL/Math.max(bb.width,1), sR.height*FILL/Math.max(bb.height,1));
+        z=Math.max(0.1, Math.min(z, d.maxZ));
+        d.pz.zoom(z);
+      }
+    }catch(e){}
+    requestAnimationFrame(()=>{
+      try{
+        const sR=d.stage.getBoundingClientRect();
+        const bb=unionBox(clusterRects(d, ids));
+        if(bb.width<=2) return;
+        const p=d.pz.getPan();
+        d.pz.pan({x:p.x+(sR.left+sR.width/2-bb.cx), y:p.y+(sR.top+sR.height/2-bb.cy)});
+      }catch(e){}
+    });
   }
   let A=null,B=null,cur=-1,timer=null;
   function show(i){
@@ -509,8 +541,8 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
   (async()=>{
     mermaid.initialize({ startOnLoad:false, theme:'base', themeVariables:{ fontFamily:'-apple-system, Segoe UI, Roboto, sans-serif', fontSize:'13px', lineColor:'#9aa7b6', edgeLabelBackground:'#ffffff' }, flowchart:{ nodeSpacing:30, rankSpacing:52, htmlLabels:true, useMaxWidth:false, curve:'basis', padding:8 } });
     try{
-      A=await mkDiagram(ARCH_GRAPH,'diagA','syncArchX',0.30);
-      B=await mkDiagram(AI_GRAPH,'diagB','syncAIX',0.36);
+      A=await mkDiagram(ARCH_GRAPH,'diagA','syncArchX',2.6);
+      B=await mkDiagram(AI_GRAPH,'diagB','syncAIX',2.0);
     }catch(e){ document.getElementById('diagA').innerHTML='<p style="padding:16px;color:#b91c1c">Render failed: '+(e&&e.message?e.message:e)+'</p>'; }
     document.getElementById('snext').onclick=()=>{stopPlay();show(cur+1);};
     document.getElementById('sprev').onclick=()=>{stopPlay();show(cur-1);};
