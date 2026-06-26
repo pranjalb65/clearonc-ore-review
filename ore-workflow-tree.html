@@ -171,7 +171,9 @@ IN["Data intake<br/><small>EHR, HIE, claims, upload</small>"]:::data
 PARSE["Structured extraction<br/><small>ER+, PR+, HER2 3+</small>"]:::llm
 TERM["Terminology normalize<br/><small>C50.912 to SNOMED</small>"]:::data
 BQ{"Primary biomarker gate<br/><small>HER2 IHC</small>"}:::dec
-ISH["Equivocal to reflex test<br/><small>IHC 2+ to ISH</small>"]:::det
+ISH{"Reflex ISH on file?<br/><small>FISH</small>"}:::dec
+BREQ["Request data<br/><small>order HER2 IHC</small>"]:::flag
+IREQ["Request data<br/><small>reflex ISH</small>"]:::flag
 EPI["Episode of Care<br/><small>triple-positive, Stage IIB</small>"]:::data
 CTAG{"Cancer type<br/><small>breast</small>"}:::dec
 MOTH["Other cancer models<br/><small>NSCLC, CRC, and so on</small>"]:::det
@@ -182,7 +184,13 @@ SHL["Subtype model<br/><small>HER2-low</small>"]:::det
 STN["Subtype model<br/><small>triple-negative</small>"]:::det
 IN --> PARSE --> TERM --> EPI
 BQ -- "IHC 3+" --> SUB
-BQ -- "IHC 2+" --> ISH --> SUB
+BQ -- "IHC 2+" --> ISH
+BQ -- "not on file" --> BREQ
+BREQ -. "re-enter" .-> BQ
+ISH -- "amplified" --> SUB
+ISH -- "not amplified" --> SUB
+ISH -- "missing" --> IREQ
+IREQ -. "re-enter" .-> ISH
 BQ -- "0/1+" --> SUB
 EPI --> CTAG
 CTAG -- breast --> BQ
@@ -424,7 +432,7 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     return '<div class="deriv"><span class="dl">How ORE arrives here</span>'+pills+'</div>';
   }
   const REL = {
-    BQ:['BQ','ISH'],
+    BQ:['BQ','ISH','BREQ','IREQ'],
     SUB:['SUB','MBR','SHR','SHL','STN'],
     ESC:['ESC','PPREF','PDE'],
     PPREF:['PPREF','PADAPT','PTDM1','PCOMP','PENDO','LOCO','MDT','SUPP'],
