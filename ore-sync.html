@@ -4,20 +4,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex,nofollow">
-<title>ORE Architecture and Data Flow, synced</title>
+<title>ORE Architecture and AI, synced</title>
 <style>
-  :root{--ink:#0e1622;--muted:#5b6b7a;--faint:#8595a4;--line:#e4e9ef;--bg:#eef1f6;--panel:#fff;--blue:#1f6feb;--green:#15803d;--amber:#b45309;--violet:#6d4aff;--slate:#64748b;--red:#b91c1c}
+  :root{--ink:#0e1622;--muted:#5b6b7a;--faint:#8595a4;--line:#e4e9ef;--bg:#eef1f6;--panel:#fff;--blue:#1f6feb;--green:#15803d;--amber:#b45309;--violet:#6d4aff;--slate:#64748b;--red:#b91c1c;--catch:#db2777}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;overflow:hidden}
   body{background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
   .app{display:flex;flex-direction:column;height:100vh}
-  .bar{flex:none;height:42px;display:flex;align-items:center;gap:10px;padding:0 16px;background:#11213b;color:#fff}
+  .bar{flex:none;height:40px;display:flex;align-items:center;gap:10px;padding:0 16px;background:#11213b;color:#fff}
   .bar b{font-weight:700}.bar .tag{font-size:11.5px;color:#9fc1ff}
-  .panes{flex:1;display:flex;min-height:0}
-  .pane{flex:1;min-width:0;display:flex;flex-direction:column;border-right:1px solid var(--line)}
-  .pane:last-child{border-right:0}
-  .paneh{flex:none;height:30px;display:flex;align-items:center;gap:7px;padding:0 12px;font-size:12px;font-weight:700;color:var(--slate);background:#f7f9fc;border-bottom:1px solid var(--line)}
+  .main{flex:1;display:flex;min-height:0}
+  .diags{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px;padding:6px}
+  .pane{flex:1;min-height:0;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 6px 20px rgba(20,40,80,.07)}
+  .paneh{flex:none;height:28px;display:flex;align-items:center;gap:7px;padding:0 12px;font-size:12px;font-weight:700;color:var(--slate);background:#f7f9fc;border-bottom:1px solid var(--line)}
   .paneh .d{width:8px;height:8px;border-radius:50%}.paneh .d.a{background:var(--blue)}.paneh .d.b{background:var(--amber)}
+  .paneh .hint{margin-left:auto;font-weight:600;color:var(--faint);font-size:11px}
   .stage{flex:1;position:relative;background:var(--panel);overflow:hidden}
   .stage>div{width:100%;height:100%}
   .stage svg{width:100%;height:100%;display:block;cursor:grab}.stage svg:active{cursor:grabbing}
@@ -26,48 +27,80 @@
   .stage svg .edgeLabel,.stage svg .edgeLabel foreignObject{overflow:visible}
   .stage svg .nodeLabel{font-weight:600}
   .stage svg .node small{font-weight:400;font-size:0.82em;opacity:.66}
+  .stage svg .cluster rect{rx:13px;ry:13px;fill:#fafcff;stroke:#d8e0ea}
+  .stage svg .cluster text{font-weight:700;fill:var(--slate)}
   .stage svg g.node.focus rect,.stage svg g.node.focus polygon{stroke:var(--blue)!important;stroke-width:3.2px!important}
   .stage svg g.node.focus{filter:drop-shadow(0 0 0 2px #fff) drop-shadow(0 0 7px rgba(31,111,235,.55))}
-  .stage svg.stepping g.node:not(.focus){opacity:.32;transition:opacity .2s}
-  .stepbar{flex:none;min-height:78px;display:flex;align-items:center;gap:16px;padding:10px 16px;background:var(--panel);border-top:1px solid var(--line)}
-  .stepbar .info{flex:1;min-width:0}
-  .stepbar .step{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--blue)}
-  .stepbar h2{font-size:16px;margin:2px 0 3px;letter-spacing:-.01em}
-  .stepbar .note{font-size:12.5px;color:var(--muted)}.stepbar .note b{color:var(--ink)}
-  .stepbar .ctrls{flex:none;display:flex;gap:8px}
-  .stepbar button{border:1px solid var(--line);background:#f6f8fb;border-radius:9px;padding:9px 14px;font-size:13px;font-weight:600;cursor:pointer}
-  .stepbar button:hover:not(:disabled){background:#eaf0f7}.stepbar button:disabled{opacity:.45;cursor:default}
-  .stepbar button.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
-  .stepbar .play{padding:9px 12px}
-  .stepbar .fitb{padding:9px 12px}
+  .stage svg g.node.rel rect,.stage svg g.node.rel polygon{stroke:var(--blue)!important;stroke-width:2.2px!important}
+  .stage svg g.node.rel{filter:drop-shadow(0 0 5px rgba(31,111,235,.4))}
+  .stage svg.stepping g.node:not(.focus):not(.rel){opacity:.28;transition:opacity .2s}
+
+  .panel{flex:none;width:430px;display:flex;flex-direction:column;background:var(--panel);border-left:1px solid var(--line);box-shadow:-6px 0 20px rgba(20,40,80,.05)}
+  .ph{flex:none;padding:12px 16px 10px;border-bottom:1px solid var(--line)}
+  .ph .step{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--blue)}
+  .ph h2{font-size:16.5px;margin:3px 0 6px;letter-spacing:-.01em}
+  .stagechip{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:#13325f;background:#e8effb;border:1px solid #cfe0f5;border-radius:6px;padding:2px 8px}
+  .body{flex:1;overflow:auto;padding:12px 16px;font-size:13px;line-height:1.5}
+  .body a{color:var(--blue);text-decoration:underline}
+  .archline{font-size:12.7px;color:var(--ink);margin:0 0 9px;padding:0 0 9px;border-bottom:1px dashed var(--line)}
+  .archline .al{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);margin-bottom:3px}
+  .incase{font-size:12.9px;line-height:1.55}
+  .incase .il{display:block;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);margin:10px 0 3px}
+  .tagrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:9px}
+  .t{font-size:11.5px;font-weight:600;border-radius:5px;padding:2px 7px;background:#eef1f5;color:#475569}
+  .t.flag{background:#fcebec;color:var(--red)}.t.ok{background:#e7f6ec;color:#13702f}.t.cite{background:#eef4ff;color:#1452c9}.t.out{background:#f0ecff;color:#5b3fd0}
+  .deriv{margin:10px 0;padding:9px 0 0;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+  .deriv .dl{flex-basis:100%;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);margin-bottom:2px}
+  .dt{font-size:11px;font-weight:600;border-radius:5px;padding:2px 7px;background:#eef1f5;color:#475569}
+  .dt.data{background:#eef4ff;color:#1452c9}.dt.det{background:#e7f6ec;color:#13702f}.dt.cite{background:#eef4ff;color:#1452c9;border:1px solid #cfe0f5}.dt.ok{background:#e7f6ec;color:#13702f}.dt.flag{background:#fcebec;color:var(--red)}.dt.catch{background:#fce7f3;color:var(--catch)}
+  .darr{color:var(--faint);font-size:11px}
+  .rightblock{margin:11px 0 0;padding:9px 11px;background:#fff7ec;border:1px solid #f0d8ad;border-radius:9px;font-size:12.6px;line-height:1.5}
+  .rightblock .rl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--amber);margin-bottom:3px}
+  .rightblock b{color:var(--ink)}
+  .srcline{margin:9px 0 0;padding:8px 11px;background:#f4f7fb;border:1px solid #d8e0ea;border-radius:9px;font-size:12.4px;line-height:1.5}
+  .srcline .rl{font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--slate);margin-bottom:3px}
+  .srcline b{color:var(--ink)}
+  .bench{margin-top:10px;padding-top:9px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  .bench .bl{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);margin-right:2px}
+  .bench .bp{font-size:11.5px;font-weight:600;border:1px solid #d8e0ea;border-radius:6px;padding:3px 8px;background:#f4f7fb;color:#475569}
+  .nav{flex:none;display:flex;gap:8px;padding:11px 16px;border-top:1px solid var(--line);align-items:center}
+  .nav button{flex:1;border:1px solid var(--line);background:#f6f8fb;border-radius:9px;padding:9px 0;font-size:13px;font-weight:600;cursor:pointer}
+  .nav button:hover:not(:disabled){background:#eaf0f7}.nav button:disabled{opacity:.45;cursor:default}
+  .nav button.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+  .nav button.primary:hover:not(:disabled){background:#1a5fd0}
+  .nav .play,.nav .fitb{flex:none;width:44px}
+  @media(max-width:1080px){.panel{width:360px}}
   .embed .bar{display:none}
 </style>
 </head>
 <body>
 <script>try{if(window.self!==window.top)document.documentElement.classList.add('embed')}catch(e){document.documentElement.classList.add('embed')}</script>
 <div class="app">
-  <div class="bar"><b>ORE</b> <span class="tag">Architecture and Data Flow, synced</span></div>
-  <div class="panes">
-    <div class="pane">
-      <div class="paneh"><span class="d a"></span> Architecture, how ORE reasons</div>
-      <div class="stage"><div id="diagA"></div></div>
+  <div class="bar"><b>ORE</b> <span class="tag">Architecture and AI, one synced walkthrough</span></div>
+  <div class="main">
+    <div class="diags">
+      <div class="pane">
+        <div class="paneh"><span class="d a"></span> Architecture, the master skeleton instantiated for HER2-positive breast cancer <span class="hint">drag or scroll to explore</span></div>
+        <div class="stage"><div id="diagA"></div></div>
+      </div>
+      <div class="pane">
+        <div class="paneh"><span class="d b"></span> AI and data, the machinery that runs each decision <span class="hint">the same step lights up here</span></div>
+        <div class="stage"><div id="diagB"></div></div>
+      </div>
     </div>
-    <div class="pane">
-      <div class="paneh"><span class="d b"></span> Data and AI flow, how it runs</div>
-      <div class="stage"><div id="diagB"></div></div>
-    </div>
-  </div>
-  <div class="stepbar">
-    <div class="info">
-      <div class="step" id="sstep">Synced walkthrough</div>
-      <h2 id="stitle">Press Next to begin</h2>
-      <div class="note" id="snote">Each step highlights the reasoning node on the left and the data or AI mechanism it uses on the right.</div>
-    </div>
-    <div class="ctrls">
-      <button id="sfit" class="fitb" title="Fit both">Fit both</button>
-      <button id="sprev">&#9664; Prev</button>
-      <button id="splay" class="play" title="Auto-play">&#9654;</button>
-      <button id="snext" class="primary">Next &#9654;</button>
+    <div class="panel">
+      <div class="ph">
+        <div class="step" id="sstep">Synced walkthrough</div>
+        <h2 id="stitle">Press Next to begin</h2>
+        <span class="stagechip" id="schip" style="display:none"></span>
+      </div>
+      <div class="body" id="sbody">Each step highlights the reasoning node on the left and the AI or data mechanism that runs it on the right, with the same detail you get in the full tabs: what the layer does, this case, how ORE arrives, the source that binds the rule, and the benchmark that validates it.</div>
+      <div class="nav">
+        <button id="sfit" class="fitb" title="Fit both">&#10070;</button>
+        <button id="sprev">&#9664; Prev</button>
+        <button id="splay" class="play" title="Auto-play">&#9654;</button>
+        <button id="snext" class="primary">Next &#9654;</button>
+      </div>
     </div>
   </div>
 </div>
@@ -75,6 +108,7 @@
 <script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
 <script type="module">
   import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+
   const ARCH_GRAPH = `flowchart LR
 IN["Data intake<br/><small>EHR, HIE, claims, upload</small>"]:::data
 PARSE["Structured extraction<br/><small>ER+, PR+, HER2 3+</small>"]:::llm
@@ -228,40 +262,45 @@ classDef out fill:#f0ecff,stroke:#6d4aff,color:#0e1622;
 classDef dec fill:#ffffff,stroke:#64748b,color:#0e1622;
 classDef flag fill:#fcebec,stroke:#b91c1c,color:#0e1622,stroke-width:2px;
 classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
-  const FLOW_GRAPH = `flowchart LR
-EHR["EHR pull: SMART on FHIR, Xealth"]:::data
-HIE["HIE feed"]:::data
-CLM["Claims"]:::data
-MAN["Manual upload: PreDoc"]:::data
-NORM["Normalize to ClinicalProfile"]:::det
-EPI["Episode of Care"]:::data
-EHR --> NORM
-HIE --> NORM
-CLM --> NORM
-MAN --> NORM
-NORM --> EPI
-EPI --> PIPE["ORE pipeline (the decision tree)"]:::det
-PIPE --> COMP{"Data sufficient?"}:::dec
-COMP -- thin --> ASK["Request data, follow-up"]:::flag
-ASK -.-> NORM
-COMP -- enough --> DEC["Deterministic rule lookup"]:::det
-PIPE --> RAG["RAG retrieval, evidence"]:::llm
-DEC --> KB[("Supabase knowledge tables")]:::data
-RAG --> VEC[("Supabase pgvector, literature")]:::data
-DEC --> LLM["LLM edge: de-identify, explain, consensus"]:::llm
-RAG --> LLM
-LLM --> OUT["Cited physician and patient output"]:::out
+
+  const AI_GRAPH = `flowchart LR
+EPI["Episode of Care<br/><small>the patient graph</small>"]:::data
+ORCH{"Orchestrator and handoff<br/><small>routes every step</small>"}:::dec
+AREAD["Agent: read<br/><small>notes to typed facts</small>"]:::llm
+EPI --> ORCH
+ORCH --> AREAD
+AREAD --> EPI
+subgraph CORE["Deterministic core"]
+  SKILL["Skills<br/><small>engine modules as tools</small>"]:::det
+  KG[("Knowledge graph<br/><small>cited rules, SNOMED and OMOP</small>")]:::data
+  SKILL --> KG
+end
+ORCH --> SKILL
+SKILL --> RAG["RAG: ground<br/><small>evidence retrieval</small>"]:::llm
+RAG --> VEC[("pgvector<br/><small>literature, guideline text</small>")]:::data
+SKILL --> AEXP["Agent: explain<br/><small>cited rule to rationale</small>"]:::llm
+RAG --> AEXP
+ORCH --> COUNCIL["Council and tumor-board agents<br/><small>cross-check, deliberate</small>"]:::llm
+COUNCIL --> GUARD
+SKILL --> GUARD{"Guardrails<br/><small>PHI, cite-or-abstain, gate</small>"}:::flag
+AEXP --> GUARD
+GUARD -- pass --> OUT["Cited output<br/><small>physician and patient</small>"]:::out
+GUARD -- abstain --> HANDOFF["Handoff to human or tumor board"]:::flag
 OUT --> SIGN{"Physician signs"}:::dec
 SIGN --> FB["Feedback, gated"]:::det
-FB --> KB
-subgraph KNOW["Knowledge ingestion, continuous and gated"]
-  API["Source APIs: ClinicalTrials.gov, DailyMed, CIViC, CPIC, PubMed"]:::data
+subgraph KNOW["Knowledge ingestion, gated and versioned"]
+  API["Source guidelines<br/><small>NCCN, ASCO and CAP, AJCC, CPIC, CIViC, trials</small>"]:::data
   ING["Normalize and version snapshot"]:::det
-  GATE["Eval and benchmark gate"]:::det
-  API --> ING --> GATE
+  API --> ING
 end
-GATE --> KB
-GATE --> VEC
+EVAL{"Evals<br/><small>gold cases, benchmarks, calibration</small>"}:::dec
+ING --> EVAL
+FB --> EVAL
+EVAL -- pass --> KG
+EVAL -- pass --> VEC
+FT["Fine-tuning, edge only<br/><small>extraction and phrasing, de-identified</small>"]:::catch
+FB -.-> FT
+FT -.-> EVAL
 classDef data fill:#eef4ff,stroke:#1f6feb,color:#0e1622;
 classDef det fill:#e7f6ec,stroke:#15803d,color:#0e1622;
 classDef llm fill:#fdf1e3,stroke:#b45309,color:#0e1622,stroke-dasharray:4 2;
@@ -269,81 +308,216 @@ classDef out fill:#f0ecff,stroke:#6d4aff,color:#0e1622;
 classDef dec fill:#ffffff,stroke:#64748b,color:#0e1622;
 classDef flag fill:#fcebec,stroke:#b91c1c,color:#0e1622,stroke-width:2px;
 classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
-  // each step: a = architecture node id, f = data-flow node id, t = title, n = the link
+
+  // Rich per-node content, ported from the Architecture tab so the synced
+  // step frame carries the same detail.
+  const ARCH = {
+    IN:{t:'Data intake',d:'Data arrives by EHR pull (SMART on FHIR, Xealth), an HIE feed, claims, or manual upload, and is normalized to one record. The boundary is disease and product agnostic.'},
+    PARSE:{t:'Structured extraction',d:'A language model turns the raw record into one typed clinical profile, with an evidence span recorded for every fact. One of the few places the model is used.'},
+    TERM:{t:'Terminology normalization',d:'Source codes map to a standard vocabulary, so the same logic runs across coding systems and countries.'},
+    BQ:{t:'Primary biomarker gate',d:'The engine checks whether a result is definitive enough to open a targeted pathway. If the gating result is absent, for example in claims-only data, it requests the result rather than assuming.'},
+    EPI:{t:'Episode of Care',d:'Every fact lands in one longitudinal record with its source and a confidence. Every engine reads from this.'},
+    HIST:{t:'Histology and grade',d:'Tissue diagnosis: a biopsy or excision is read for morphology and grade, with IHC to confirm the tumor origin. The gold standard for solid tumors.'},
+    STG:{t:'Staging, concur or flag',d:'Anatomical extent by the TNM system, from imaging (CT, MRI, PET, ultrasound) and clinical markers. A stage is often already recorded, so ORE checks it against the findings and either concurs or flags a consideration. This is decision support, not just a read.'},
+    MOL:{t:'Molecular profile',d:'The molecular fingerprint: NGS for mutations, fusions, and translocations, liquid biopsy of circulating tumor DNA, and genomic instability (MSI, HRD). Finds targetable alterations.'},
+    GERM:{t:'Hereditary vs somatic',d:'Inherited versus acquired: germline testing of normal tissue or blood for hereditary syndromes such as BRCA1/2. Affects the plan and family risk.'},
+    SUB:{t:'Subtype stratification',d:'The disease routes to a subtype-specific model, each with its own pathways and risk profile. ORE is not one generic model.'},
+    FACTORS:{t:'Patient factors',d:'ORE reads the whole patient, not just the diagnosis: performance status, organ function (cardiac, renal, hepatic, marrow), comorbidity and frailty, age and menopausal status, germline genetics, prior therapy and response, goals of care, and drug interactions and allergies. Each factor is also checked for whether the data is on file.'},
+    ESC:{t:'Risk-adapted intensity',d:'Treatment intensity is escalated or de-escalated based on stage and risk.'},
+    PPREF:{t:'Plan generation',d:'A guideline-concordant, cited plan is generated for the determined line and setting.'},
+    PADAPT:{t:'Response-adapted branching',d:'Later therapy is chosen by how the patient responds, not fixed in advance.'},
+    CR2:{t:'Concordance validation',d:'Recorded care is checked against the cited standard. Gaps and enhancements are flagged, never silently overridden.'},
+    SGAP:{t:'Safety and monitoring screen',d:'The engine checks drug-specific risks and required monitoring, and flags any missing baseline test.'},
+    S3T:{t:'Pharmacogenomic safety check',d:'When a planned drug has a known gene interaction, the engine requires the genotype before dosing.'},
+    QUAL:{t:'Data sufficiency gate',d:'The engine scores how complete the record is against what the pathway needs. With thin data, for example claims only, it abstains rather than guessing.'},
+    GAPS:{t:'Gap detection and follow-up',d:'Missing facts are ranked by how much each would change the recommendation, then turned into targeted requests routed to the EHR, a document upload, or the clinician.'},
+    PUBMED:{t:'Evidence grounding',d:'A retrieval layer (RAG over a literature index in Supabase pgvector) grounds the wording. Decisions use deterministic lookup against cited rules, not RAG, so the literature never overrides a decision.'},
+    TRL:{t:'Trial matching',d:'Recruiting trials are matched by phenotype and stage. The engine flags candidates, it does not enroll.'},
+    ORCH:{t:'Orchestration',d:'Identifiers are removed, the explanation is drafted and grounded, and flags require agreement across models.'},
+    OUT:{t:'Output generation',d:'A cited clinician view and a plain-language patient summary are produced.'},
+    SIGN:{t:'Sign-off and feedback',d:'A licensed physician signs. Their agree, edit, or reject signal improves the next version, gated, never auto-applied.'},
+  };
+  const HTML = {
+    IN:'ClearOnc pulls from the EHR (SMART on FHIR, Xealth), an HIE feed, or claims, or accepts a manual upload (PreDoc), then normalizes them to one envelope. <div class="tagrow"><span class="t">touchpoint</span></div>',
+    PARSE:'An LLM extracts the record into typed, validated facts: <b>ER+, PR+, HER2 IHC 3+, cT2N1M0, ECOG 1, trastuzumab, paclitaxel</b>. High-stakes fields are cross-checked by a second model. <div class="tagrow"><span class="t">LLM edge</span></div>',
+    TERM:'The diagnosis code is normalized: <b>ICD-10-CM C50.912 to SNOMED 254837009</b> (malignant neoplasm of breast). ICD is preserved; SNOMED is what the engines reason over, so the case works for US and international partners.',
+    EPI:'The canonical, longitudinal record: triple-positive, Stage IIB, node-positive, with provenance and a confidence on every fact. Every engine reads from this.',
+    HIST:'<b>On file:</b> invasive ductal carcinoma on core biopsy, with hormone-receptor and HER2 staining. Grade documents aggressiveness. If tissue were missing, ORE would request a biopsy.',
+    STG:'<b>On file:</b> cT2N1M0, clinical Stage IIB (node-positive), from imaging and exam. <b>ORE concurs</b> with this stage, and notes the pathologic stage will refine it after surgery. If the recorded stage looked inconsistent with the findings (occult metastasis, understaged nodes), ORE would flag a consideration; if imaging were missing, it would request it.',
+    BQ:'<b>IHC 3+ is definitively HER2-positive</b>, no reflex ISH needed. IHC 1+ or 0 would not be actionable; <b>2+ triggers reflex ISH</b>. Only a confirmed positive opens a targeted pathway. <div class="tagrow"><span class="t ok">actionable</span></div>',
+    MOL:'HER2 IHC 3+ and ER/PR positive are the actionable findings here. Broad NGS and MSI or HRD are not standard for early HER2-positive breast cancer, so their absence is not a gap.',
+    GERM:'Germline BRCA is untested. Given the diagnosis, ORE flags it as a consideration, it would affect PARP-inhibitor eligibility and family risk-reduction. Conditional, not gating the current plan.',
+    SUB:'The episode routes to a subtype model, each with its own pathways and AE profile: <b>HER2+ (this case)</b>, HR+/HER2-negative (endocrine + CDK4/6, Oncotype), HER2-low (T-DXd), triple-negative (chemo + IO, BRCA to PARP). This is why ORE is not one generic model.',
+    FACTORS:'<b>On file:</b> ECOG 1 (performance), postmenopausal (age 62), treatment-naive (line 1), no major comorbidity, no recorded allergies. <b>Missing or conditional:</b> a baseline LVEF before trastuzumab (a gap), germline BRCA untested (conditional), and renal, hepatic, and marrow labs (assumed adequate, pending). <div class="tagrow"><span class="t ok">on file</span><span class="t flag">LVEF missing</span></div>',
+    ESC:'<b>Node-positive (N1) to dual HER2 blockade.</b> Node-negative small tumors de-escalate to paclitaxel + trastuzumab (APT). This patient is N1, so dual blockade is indicated. <div class="tagrow"><span class="t">decision</span></div>',
+    PPREF:'<b>Neoadjuvant trastuzumab + pertuzumab + a taxane, then surgery.</b> Cited: <a href="https://pubmed.ncbi.nlm.nih.gov/22153890/">NeoSphere 22153890</a>; Perjeta FDA neoadjuvant indication (tumor &gt;2 cm or node-positive). <div class="tagrow"><span class="t cite">NeoSphere</span><span class="t cite">FDA label</span></div>',
+    PADAPT:'Driven by surgery: <b>residual disease to adjuvant T-DM1 x14</b> (<a href="https://pubmed.ncbi.nlm.nih.gov/30516102/">KATHERINE 30516102</a>, <a href="https://pubmed.ncbi.nlm.nih.gov/39813643/">OS 39813643</a>); <b>pCR to complete one year of HER2 therapy</b> (<a href="https://pubmed.ncbi.nlm.nih.gov/28581356/">APHINITY 28581356</a>). Plus adjuvant aromatase inhibitor for 5+ years for the HR-positive component.',
+    CR2:'The recorded <b>trastuzumab + paclitaxel</b> is the node-NEGATIVE regimen (<a href="https://pubmed.ncbi.nlm.nih.gov/25564897/">APT 25564897</a>). For this node-positive patient, ORE flags <b>ENHANCE: add pertuzumab</b> for dual blockade. A real second-opinion catch, cited APHINITY and NeoSphere. <div class="tagrow"><span class="t ok">enhance</span></div>',
+    SGAP:'Trastuzumab is cardiotoxic. There is <b>no baseline LVEF on file</b>, yet she is on therapy. The FDA boxed warning requires a baseline echo or MUGA before the first dose, then every 3 months. <b>Gap: obtain baseline LVEF now.</b> <div class="tagrow"><span class="t flag">safety gap</span><span class="t cite">FDA boxed warning</span></div>',
+    S3T:'DPYD is untested but <b>conditional</b>: it does not gate the current regimen (no fluoropyrimidine). It becomes relevant only if <b>capecitabine</b> is used later, then test DPYD; a poor metabolizer should avoid it. <a href="https://doi.org/10.1002/cpt.911">CPIC 10.1002/cpt.911</a>.',
+    QUAL:'Diagnosis, stage, and the actionable biomarker are all documented, so this case runs at <b>high confidence</b>. With claims only, the biomarker and stage would be missing and ORE would <b>abstain</b> on the targeted pathway rather than guess.',
+    GAPS:'Open items here: <b>baseline LVEF</b> (important), <b>add pertuzumab</b> (enhance), <b>DPYD</b> (conditional). ORE ranks each by how much it changes the plan, then turns it into a request: re-pull the EHR, ask for the pathology report, or ask the clinician.',
+    PUBMED:'Ranked HER2-positive evidence grounds the explanation: APHINITY, KATHERINE (and the 2025 OS update), NeoSphere, HERA, NSABP B-31/N9831. <b>Literature grounds the language; it never overrides the cited deterministic decision.</b> <div class="tagrow"><span class="t">LLM edge</span></div>',
+    TRL:'Real recruiting trials (verified): <a href="https://clinicaltrials.gov/study/NCT07616427">NCT07616427</a> (HR+/HER2+ neoadjuvant, strongest phenotype match), NCT05035836, NCT07196774. Eligibility depends on treatment phase. ORE flags candidates; it does not enroll.',
+    ORCH:'PHI is de-identified before any external model. The LLM drafts the explanation grounded by PubMed. Flags require <b>multi-model consensus</b> before they surface.',
+    OUT:'A cited physician view and a patient-friendly summary: <b>add pertuzumab, obtain baseline LVEF, plan endocrine therapy, trial option</b>. The clinician reviews and signs. <div class="tagrow"><span class="t out">physician + patient</span></div>',
+    SIGN:'The physician agree, disagree, or edit response becomes a labeled signal, gated by the eval suite, that improves the next ORE version. Gated, never auto-applied.',
+  };
+  const TITLE = {
+    IN:'Patient data in', PARSE:'Parse to typed facts', TERM:'Terminology', EPI:'Episode of Care',
+    HIST:'Histology', STG:'Staging', BQ:'HER2 status (biomarker gating)', MOL:'Molecular profile',
+    GERM:'Hereditary vs somatic', SUB:'Breast subtype routing', FACTORS:'Patient factors',
+    ESC:'Escalate or de-escalate', PPREF:'Preferred plan (generated)', PADAPT:'Response-adapted adjuvant',
+    CR2:'Concordance: the catch', SGAP:'Safety: cardiotoxicity and LVEF', S3T:'Pharmacogenomics (DPYD)',
+    QUAL:'Data sufficiency', GAPS:'Gap detection', PUBMED:'PubMed grounding', TRL:'Trial match',
+    ORCH:'Orchestration', OUT:'Outputs', SIGN:'Sign-off and feedback',
+  };
+  const BENCH = {
+    PARSE:['HealthBench','MedHELM'], TERM:['MedHELM'], BQ:['MTBBench'], HIST:['MedHELM'], STG:['MedGUIDE'],
+    MOL:['MTBBench'], GERM:['internal eval'], FACTORS:['HealthBench'], SUB:['CancerGUIDE'], ESC:['MedGUIDE'],
+    PPREF:['MedGUIDE','CancerGUIDE'], PADAPT:['MedGUIDE'], CR2:['MedGUIDE'], SGAP:['NOHARM','ARISE','HealthBench'],
+    S3T:['CPIC eval (internal)'], QUAL:['gold-case regression','calibration'], GAPS:['internal eval'],
+    PUBMED:['LitXBench'], TRL:['trial-match eval'], ORCH:['MGB JAMA reasoning','HealthBench'], OUT:['HealthBench'],
+    SIGN:['gold-case regression'],
+  };
+  const DERIV = {
+    IN:[{t:'EHR, HIE, claims, upload',k:'data'},{t:'normalize',k:'det'},{t:'one envelope',k:'ok'}],
+    PARSE:[{t:'raw record',k:'data'},{t:'LLM extract and validate',k:'det'},{t:'typed ClinicalProfile + evidence',k:'ok'}],
+    TERM:[{t:'ICD-10-CM C50.912',k:'data'},{t:'OMOP Maps to',k:'det'},{t:'SNOMED 254837009',k:'ok'}],
+    BQ:[{t:'HER2 IHC 3+',k:'data'},{t:'rule: 3+ is definitive HER2+',k:'det'},{t:'ASCO and CAP HER2',k:'cite'},{t:'open HER2 pathway',k:'ok'}],
+    EPI:[{t:'all typed facts',k:'data'},{t:'merge and stamp provenance',k:'det'},{t:'Episode of Care',k:'ok'}],
+    HIST:[{t:'core biopsy',k:'data'},{t:'morphology, grade, IHC',k:'det'},{t:'invasive ductal carcinoma',k:'ok'}],
+    STG:[{t:'recorded stage + findings',k:'data'},{t:'validate against TNM',k:'det'},{t:'AJCC',k:'cite'},{t:'concur, or flag',k:'ok'}],
+    MOL:[{t:'HER2, HR status',k:'data'},{t:'NGS not standard in early HER2+',k:'det'},{t:'no extra molecular gap',k:'ok'}],
+    GERM:[{t:'germline status',k:'data'},{t:'testing criteria',k:'det'},{t:'NCCN germline',k:'cite'},{t:'untested, consider',k:'flag'}],
+    SUB:[{t:'HER2+ and HR+',k:'data'},{t:'rule: subtype router',k:'det'},{t:'triple-positive model',k:'ok'}],
+    FACTORS:[{t:'patient record',k:'data'},{t:'check each factor on file',k:'det'},{t:'flag what is missing',k:'flag'}],
+    ESC:[{t:'N1 node-positive',k:'data'},{t:'rule: node-positive escalates',k:'det'},{t:'dual blockade',k:'ok'}],
+    PPREF:[{t:'HER2+ node-positive Stage IIB',k:'data'},{t:'rule: neoadjuvant dual blockade + taxane',k:'det'},{t:'NeoSphere, FDA label',k:'cite'},{t:'THP or TCHP plan',k:'ok'}],
+    PADAPT:[{t:'surgery pathology',k:'data'},{t:'rule: response-adapted',k:'det'},{t:'KATHERINE, APHINITY',k:'cite'},{t:'T-DM1 or complete HER2',k:'ok'}],
+    CR2:[{t:'recorded trastuzumab + paclitaxel, N1',k:'data'},{t:'rule: node-positive favors dual blockade',k:'det'},{t:'APHINITY, NeoSphere',k:'cite'},{t:'ENHANCE: add pertuzumab',k:'catch'}],
+    SGAP:[{t:'trastuzumab, no baseline LVEF',k:'data'},{t:'rule: cardiotoxic needs baseline and serial LVEF',k:'det'},{t:'FDA boxed warning',k:'cite'},{t:'GAP: obtain LVEF',k:'flag'}],
+    S3T:[{t:'DPYD untested',k:'data'},{t:'rule: matters only with a fluoropyrimidine',k:'det'},{t:'CPIC DPYD',k:'cite'},{t:'conditional, not gating now',k:'ok'}],
+    QUAL:[{t:'fields present vs required',k:'data'},{t:'completeness score',k:'det'},{t:'high confidence, else abstain',k:'ok'}],
+    GAPS:[{t:'missing facts',k:'data'},{t:'rank by impact on the plan',k:'det'},{t:'targeted requests',k:'flag'}],
+    PUBMED:[{t:'HER2+ subtype query',k:'data'},{t:'RAG over the literature index',k:'det'},{t:'APHINITY, KATHERINE',k:'cite'},{t:'grounded explanation',k:'ok'}],
+    TRL:[{t:'phenotype + stage',k:'data'},{t:'eligibility match',k:'det'},{t:'NCT07616427',k:'cite'},{t:'ranked candidates',k:'ok'}],
+    ORCH:[{t:'all step outputs',k:'data'},{t:'de-identify, ground, consensus',k:'det'},{t:'assembled cited result',k:'ok'}],
+    OUT:[{t:'assembled result',k:'data'},{t:'render two views',k:'det'},{t:'physician and patient, cited',k:'ok'}],
+    SIGN:[{t:'physician agree or edit',k:'data'},{t:'labeled signal, eval gate',k:'det'},{t:'next version',k:'ok'}],
+  };
+  // left-pane relevance clusters
+  const RELA = {
+    BQ:['BQ','ISH','BREQ','IREQ'], SUB:['SUB','MBR','SHR','SHL','STN'], ESC:['ESC','PPREF','PDE'],
+    PPREF:['PPREF','PADAPT','PTDM1','PCOMP','PENDO','LOCO','MDT','SUPP'], PADAPT:['PADAPT','PTDM1','PCOMP'],
+    CR2:['CR1','CC1','CR2','CC2','CR3','CC3'], SGAP:['S1','SGAP','S2','S2OK','S3','S3NA','S3T','S4','S5'],
+    S3T:['S3','S3NA','S3T'], QUAL:['QUAL','QHI','QABS'], SIGN:['SIGN','FBP','FBE','GATE'],
+  };
+  // right-pane relevance clusters
+  const RELB = {
+    AREAD:['AREAD','EPI','AEXP'], KG:['KG','SKILL'], EPI:['EPI','ORCH','AREAD'], SKILL:['SKILL','KG','RAG'],
+    GUARD:['GUARD','HANDOFF','SIGN'], HANDOFF:['HANDOFF','GUARD'], RAG:['RAG','VEC','AEXP'],
+    ORCH:['ORCH','COUNCIL','AREAD','AEXP'], OUT:['OUT','SIGN'], SIGN:['SIGN','FB','EVAL','OUT'],
+  };
+
+  // the synced steps: order, the matching AI node, the master stage, the
+  // right-pane mechanism, and the source that binds the rule.
   const STEPS = [
-    {a:'IN', f:'NORM', t:'Data intake', n:'lands in the normalize stage'},
-    {a:'PARSE', f:'NORM', t:'Structured extraction', n:'the LLM extraction inside normalize'},
-    {a:'TERM', f:'NORM', t:'Terminology', n:'code mapping inside normalize'},
-    {a:'EPI', f:'EPI', t:'Episode of Care', n:'the canonical record every engine reads'},
-    {a:'HIST', f:'EPI', t:'Histology and grade', n:'read from the record, requested if missing'},
-    {a:'STG', f:'DEC', t:'Staging, concur or flag', n:'validated against a cited staging rule'},
-    {a:'BQ', f:'DEC', t:'Primary biomarker gate', n:'a deterministic rule lookup against the Supabase knowledge tables'},
-    {a:'MOL', f:'DEC', t:'Molecular profile', n:'a deterministic lookup, NGS only if indicated'},
-    {a:'GERM', f:'DEC', t:'Hereditary vs somatic', n:'a deterministic lookup against germline criteria'},
-    {a:'SUB', f:'DEC', t:'Subtype model', n:'deterministic routing from the knowledge base'},
-    {a:'FACTORS', f:'EPI', t:'Patient factors', n:'read from the Episode'},
-    {a:'ESC', f:'DEC', t:'Risk-adapted intensity', n:'a cited rule lookup'},
-    {a:'PPREF', f:'DEC', t:'Plan generation', n:'cited rules from the knowledge base'},
-    {a:'PADAPT', f:'DEC', t:'Response-adapted', n:'a cited rule lookup'},
-    {a:'CR2', f:'DEC', t:'Concordance', n:'recorded care checked against cited rules'},
-    {a:'SGAP', f:'DEC', t:'Safety screen', n:'adverse-event rules from the knowledge base'},
-    {a:'S3T', f:'DEC', t:'Pharmacogenomics', n:'CPIC rules from the knowledge base'},
-    {a:'QUAL', f:'COMP', t:'Data sufficiency', n:'the completeness gate'},
-    {a:'GAPS', f:'ASK', t:'Gap and follow-up', n:'the data-request loop back to the sources'},
-    {a:'PUBMED', f:'RAG', t:'Evidence grounding', n:'RAG retrieval over the pgvector literature index'},
-    {a:'TRL', f:'DEC', t:'Trial match', n:'eligibility matched against the trial knowledge'},
-    {a:'ORCH', f:'LLM', t:'Orchestration', n:'the LLM edge: de-identify, explain, consensus'},
-    {a:'OUT', f:'OUT', t:'Outputs', n:'the cited physician and patient views'},
-    {a:'SIGN', f:'FB', t:'Sign-off and feedback', n:'gated feedback back into the knowledge base'},
+    {a:'IN', f:'AREAD', stage:'Intake', mech:'the <b>read agent</b> ingests the record from any channel into the Episode', src:'data provenance and a confidence on every fact'},
+    {a:'PARSE', f:'AREAD', stage:'Intake: extraction', mech:'the <b>read agent</b> turns notes into typed facts, dual-pass, evidence-linked', src:'extraction validated against HealthBench and MedHELM'},
+    {a:'TERM', f:'KG', stage:'Intake: terminology', mech:'codes are normalized to the <b>SNOMED and OMOP backbone</b> in the knowledge graph', src:'SNOMED CT, OMOP standard vocabularies'},
+    {a:'EPI', f:'EPI', stage:'Episode of Care', mech:'the <b>patient graph</b> every agent and skill reads from', src:'longitudinal record, source and confidence stamped'},
+    {a:'HIST', f:'SKILL', stage:'Stage 2: Tissue diagnosis', mech:'a deterministic <b>skill</b> reads the histology, bound to the cited entity and grade rule', src:'WHO Classification of Tumours 5th edition, plus the matching CAP protocol'},
+    {a:'STG', f:'SKILL', stage:'Stage 4: Staging', mech:'the <b>staging-validator skill</b> checks the recorded stage and concurs or flags', src:'AJCC 8th edition (UICC TNM), version-pinned'},
+    {a:'BQ', f:'KG', stage:'Stage 3: Biomarker', mech:'a lookup against the cited <b>HER2 rule</b> in the knowledge graph', src:'ASCO and CAP HER2 guideline, 2023 update'},
+    {a:'MOL', f:'SKILL', stage:'Stage 3: Molecular', mech:'the <b>molecular-interpretation skill</b> tiers any alteration', src:'AMP, ASCO, CAP 2017 tiers, plus OncoKB levels'},
+    {a:'GERM', f:'KG', stage:'Stage 3: Germline', mech:'the <b>germline criteria</b> are a cited rule in the knowledge graph', src:'NCCN Genetic and Familial High-Risk Assessment, v2.2026'},
+    {a:'SUB', f:'SKILL', stage:'Stage 3: Subtype', mech:'deterministic <b>subtype routing</b> selects the model', src:'NCCN Breast Cancer disease panel'},
+    {a:'FACTORS', f:'EPI', stage:'Cross-cutting: Patient factors', mech:'patient factors are read from the <b>Episode of Care</b>', src:'ECOG performance scale; organ-function thresholds per the drug label'},
+    {a:'ESC', f:'SKILL', stage:'Stage 5: Planning', mech:'the <b>escalation skill</b> applies the risk-adapted rule', src:'NCCN Breast Cancer, v1.2026'},
+    {a:'PPREF', f:'KG', stage:'Stage 5: Planning', mech:'the regimen is a <b>versioned NCCN rule</b> in the knowledge graph', src:'NCCN Breast Cancer; NeoSphere and the FDA label'},
+    {a:'PADAPT', f:'SKILL', stage:'Stage 7: Response', mech:'a <b>response-adapted skill</b> branches on the surgical pathology', src:'KATHERINE, APHINITY (NCCN-codified)'},
+    {a:'CR2', f:'SKILL', stage:'Cross-cutting: Concordance', mech:'the <b>concordance-checker skill</b> compares recorded care to the cited rule', src:'APHINITY, NeoSphere (NCCN Breast Cancer)'},
+    {a:'SGAP', f:'GUARD', stage:'Stage 6: Safety', mech:'a <b>guardrail</b> flags the missing baseline LVEF before trastuzumab', src:'FDA boxed warning (trastuzumab label)'},
+    {a:'S3T', f:'KG', stage:'Stage 6: Pharmacogenomics', mech:'a conditional <b>CPIC rule</b> in the knowledge graph', src:'CPIC DPYD guideline'},
+    {a:'QUAL', f:'GUARD', stage:'Cross-cutting: Data sufficiency', mech:'the <b>cite-or-abstain guardrail</b>: enough to decide, or abstain', src:'gold-case regression and calibration'},
+    {a:'GAPS', f:'HANDOFF', stage:'Cross-cutting: Gaps', mech:'abstain and <b>hand off</b>, or request the missing data', src:'internal completeness eval'},
+    {a:'PUBMED', f:'RAG', stage:'Evidence grounding', mech:'<b>RAG</b> over the pgvector literature index grounds the explanation', src:'literature index; grounding evaluated on LitXBench'},
+    {a:'TRL', f:'SKILL', stage:'Stage 5: Trials', mech:'the <b>trial-matcher skill</b> matches protocol eligibility', src:'ClinicalTrials.gov protocol eligibility, by NCT and version'},
+    {a:'ORCH', f:'ORCH', stage:'Orchestration', mech:'the <b>orchestrator</b> routes the agents and the multi-model council', src:'MGB JAMA reasoning, HealthBench'},
+    {a:'OUT', f:'OUT', stage:'Output', mech:'the <b>cited output</b>: physician view and patient summary', src:'output quality on HealthBench'},
+    {a:'SIGN', f:'SIGN', stage:'Sign-off and learning', mech:'the physician <b>signs</b>; edits become labeled cases, gated by <b>evals</b> into the next version', src:'gold-case regression gate'},
   ];
+
+  function renderDeriv(id){
+    var d=DERIV[id]; if(!d||!d.length) return '';
+    var pills='';
+    for(var i=0;i<d.length;i++){ if(i) pills+='<span class="darr">&#8594;</span>'; pills+='<span class="dt '+(d[i].k||'')+'">'+d[i].t+'</span>'; }
+    return '<div class="deriv"><span class="dl">How ORE arrives here</span>'+pills+'</div>';
+  }
+  function renderBench(id){
+    var b=BENCH[id]; if(!b||!b.length) return '';
+    return '<div class="bench"><span class="bl">Validated by</span>'+b.map(function(x){return '<span class="bp">'+x+'</span>';}).join('')+'</div>';
+  }
 
   function findNode(svgEl, id){
     if(!svgEl) return null;
     const ns=[...svgEl.querySelectorAll('g.node')];
     return ns.find(e=>e.id && (e.id.indexOf('-'+id+'-')>-1 || e.id.endsWith('-'+id))) || null;
   }
-  async function mkDiagram(graph, mountId, idprefix){
+  async function mkDiagram(graph, mountId, idprefix, factor){
     const { svg } = await mermaid.render(idprefix, graph);
     const host=document.getElementById(mountId); host.innerHTML=svg;
     const svgEl=host.querySelector('svg'); svgEl.removeAttribute('style'); svgEl.setAttribute('width','100%'); svgEl.setAttribute('height','100%');
     const stage=host.parentElement;
     let pz=null;
     try{ if(window.svgPanZoom) pz=window.svgPanZoom(svgEl,{zoomEnabled:true,panEnabled:true,controlIcons:false,fit:true,center:true,minZoom:0.05,maxZoom:16,zoomScaleSensitivity:0.4}); }catch(e){}
-    return {svgEl,pz,stage};
+    return {svgEl,pz,stage,factor};
   }
-  function focusIn(d, id){
+  function focusIn(d, id, rel){
     if(!d||!d.svgEl) return;
-    d.svgEl.querySelectorAll('g.node.focus').forEach(e=>e.classList.remove('focus'));
+    d.svgEl.querySelectorAll('g.node.focus,g.node.rel').forEach(e=>{e.classList.remove('focus');e.classList.remove('rel');});
     if(!d.pz) return;
-    const n=findNode(d.svgEl, id); if(!n) return;
-    n.classList.add('focus'); d.svgEl.classList.add('stepping');
-    try{ const sR=d.stage.getBoundingClientRect(), nR=n.getBoundingClientRect(); if(nR.width>4){ const tz=d.pz.getZoom()*(sR.width*0.28/nR.width); d.pz.zoom(Math.max(0.15,Math.min(tz,12))); } }catch(e){}
+    const n=findNode(d.svgEl, id); if(!n){ d.svgEl.classList.remove('stepping'); return; }
+    n.classList.add('focus');
+    (rel||[]).forEach(rid=>{ if(rid!==id){ const rn=findNode(d.svgEl, rid); if(rn) rn.classList.add('rel'); } });
+    d.svgEl.classList.add('stepping');
+    try{ const sR=d.stage.getBoundingClientRect(), nR=n.getBoundingClientRect(); if(nR.width>4){ const tz=d.pz.getZoom()*(sR.width*(d.factor||0.3)/nR.width); d.pz.zoom(Math.max(0.12,Math.min(tz,12))); } }catch(e){}
     requestAnimationFrame(()=>{ try{ const s=d.stage.getBoundingClientRect(), r=n.getBoundingClientRect(); const p=d.pz.getPan(); d.pz.pan({x:p.x+(s.left+s.width/2-(r.left+r.width/2)), y:p.y+(s.top+s.height/2-(r.top+r.height/2))}); }catch(e){} });
   }
   let A=null,B=null,cur=-1,timer=null;
   function show(i){
-    cur=Math.max(0,Math.min(STEPS.length-1,i)); const st=STEPS[cur];
+    cur=Math.max(0,Math.min(STEPS.length-1,i)); const st=STEPS[cur]; const a=st.a;
     document.getElementById('sstep').textContent='Step '+(cur+1)+' of '+STEPS.length;
-    document.getElementById('stitle').textContent=st.t;
-    document.getElementById('snote').innerHTML='On the right, in the data and AI flow: <b>'+st.n+'</b>';
+    document.getElementById('stitle').textContent=(ARCH[a]&&ARCH[a].t)||TITLE[a]||a;
+    var chip=document.getElementById('schip'); chip.textContent=st.stage||''; chip.style.display=st.stage?'inline-block':'none';
+    var body='';
+    if(ARCH[a]&&ARCH[a].d) body+='<div class="archline"><span class="al">What this layer does</span>'+ARCH[a].d+'</div>';
+    body+=renderDeriv(a);
+    if(HTML[a]) body+='<div class="incase"><span class="il">In this case</span>'+HTML[a]+'</div>';
+    body+='<div class="rightblock"><div class="rl">Right pane, how it runs</div>'+st.mech+'</div>';
+    if(st.src) body+='<div class="srcline"><div class="rl">Binds to the source</div><b>'+st.src+'</b></div>';
+    body+=renderBench(a);
+    document.getElementById('sbody').innerHTML=body;
     document.getElementById('sprev').disabled=cur===0;
     document.getElementById('snext').disabled=cur===STEPS.length-1;
-    focusIn(A, st.a); focusIn(B, st.f);
+    focusIn(A, a, RELA[a]); focusIn(B, st.f, RELB[st.f]);
   }
   function stopPlay(){ if(timer){clearInterval(timer);timer=null;document.getElementById('splay').innerHTML='&#9654;';} }
-  function fitBoth(){ stopPlay(); [A,B].forEach(d=>{ if(d&&d.pz){ d.svgEl.classList.remove('stepping'); d.svgEl.querySelectorAll('g.node.focus').forEach(e=>e.classList.remove('focus')); d.pz.resize();d.pz.fit();d.pz.center(); } }); }
+  function fitBoth(){ stopPlay(); [A,B].forEach(d=>{ if(d&&d.pz){ d.svgEl.classList.remove('stepping'); d.svgEl.querySelectorAll('g.node.focus,g.node.rel').forEach(e=>{e.classList.remove('focus');e.classList.remove('rel');}); d.pz.resize();d.pz.fit();d.pz.center(); } }); }
 
   (async()=>{
-    mermaid.initialize({ startOnLoad:false, theme:'base', themeVariables:{ fontFamily:'-apple-system, Segoe UI, Roboto, sans-serif', fontSize:'13px', lineColor:'#9aa7b6', edgeLabelBackground:'#ffffff' }, flowchart:{ nodeSpacing:30, rankSpacing:50, htmlLabels:true, useMaxWidth:false, curve:'basis', padding:8 } });
+    mermaid.initialize({ startOnLoad:false, theme:'base', themeVariables:{ fontFamily:'-apple-system, Segoe UI, Roboto, sans-serif', fontSize:'13px', lineColor:'#9aa7b6', edgeLabelBackground:'#ffffff' }, flowchart:{ nodeSpacing:30, rankSpacing:52, htmlLabels:true, useMaxWidth:false, curve:'basis', padding:8 } });
     try{
-      A=await mkDiagram(ARCH_GRAPH,'diagA','syncArch');
-      B=await mkDiagram(FLOW_GRAPH,'diagB','syncFlow');
+      A=await mkDiagram(ARCH_GRAPH,'diagA','syncArchX',0.30);
+      B=await mkDiagram(AI_GRAPH,'diagB','syncAIX',0.36);
     }catch(e){ document.getElementById('diagA').innerHTML='<p style="padding:16px;color:#b91c1c">Render failed: '+(e&&e.message?e.message:e)+'</p>'; }
     document.getElementById('snext').onclick=()=>{stopPlay();show(cur+1);};
     document.getElementById('sprev').onclick=()=>{stopPlay();show(cur-1);};
     document.getElementById('sfit').onclick=fitBoth;
-    document.getElementById('splay').onclick=()=>{ if(timer){stopPlay();return;} document.getElementById('splay').innerHTML='&#10073;&#10073;'; if(cur<0)show(0); timer=setInterval(()=>{ if(cur>=STEPS.length-1){stopPlay();return;} show(cur+1); },4200); };
-    window.addEventListener('resize',()=>{ if(cur>-1){ focusIn(A,STEPS[cur].a); focusIn(B,STEPS[cur].f); } });
+    document.getElementById('splay').onclick=()=>{ if(timer){stopPlay();return;} document.getElementById('splay').innerHTML='&#10073;&#10073;'; if(cur<0)show(0); timer=setInterval(()=>{ if(cur>=STEPS.length-1){stopPlay();return;} show(cur+1); },5200); };
+    document.addEventListener('keydown',(e)=>{ const k=e.key; if(k==='ArrowRight'||k===' '){e.preventDefault();stopPlay();show(cur+1);} else if(k==='ArrowLeft'){e.preventDefault();stopPlay();show(cur-1);} else if(k==='f'||k==='F'){e.preventDefault();fitBoth();} });
+    window.addEventListener('resize',()=>{ if(cur>-1){ const st=STEPS[cur]; focusIn(A,st.a,RELA[st.a]); focusIn(B,st.f,RELB[st.f]); } });
     show(0);
   })();
 </script>
