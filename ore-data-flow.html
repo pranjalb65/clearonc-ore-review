@@ -288,7 +288,7 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     const nodes=[...svgEl.querySelectorAll('g.node')];
     return nodes.find(e=>e.id && (e.id==='flowchart-'+id || e.id.startsWith('flowchart-'+id+'-') || e.id.indexOf('-'+id+'-')>-1)) || null;
   }
-  function zoomToNode(n){ try{var sR=document.getElementById('stage').getBoundingClientRect();var nR=n.getBoundingClientRect();if(nR.width>4){var tz=pz.getZoom()*(sR.width*0.32/nR.width);pz.zoom(Math.max(0.2,Math.min(tz,12)));}}catch(e){} }
+  function zoomToNode(n){ try{var sR=document.getElementById('stage').getBoundingClientRect();var nR=n.getBoundingClientRect();if(nR.width>4){var tz=pz.getZoom()*(sR.width*0.22/nR.width);pz.zoom(Math.max(0.2,Math.min(tz,12)));}}catch(e){} }
   function focusNode(id){
     svgEl && svgEl.querySelectorAll('g.node.focus, g.node.rel').forEach(function(e){e.classList.remove('focus');e.classList.remove('rel');});
     if(!pz || !svgEl) return;

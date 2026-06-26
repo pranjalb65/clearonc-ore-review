@@ -80,21 +80,37 @@ IN["Data intake<br/><small>EHR, HIE, claims, upload</small>"]:::data
 PARSE["Structured extraction<br/><small>ER+, PR+, HER2 3+</small>"]:::llm
 TERM["Terminology normalize<br/><small>C50.912 to SNOMED</small>"]:::data
 BQ{"Primary biomarker gate<br/><small>HER2 IHC</small>"}:::dec
-ISH["Equivocal to reflex test<br/><small>IHC 2+ to ISH</small>"]:::det
+ISH{"Reflex ISH on file?<br/><small>FISH</small>"}:::dec
+BREQ["Request data<br/><small>order HER2 IHC</small>"]:::flag
+IREQ["Request data<br/><small>reflex ISH</small>"]:::flag
 EPI["Episode of Care<br/><small>triple-positive, Stage IIB</small>"]:::data
 CTAG{"Cancer type<br/><small>breast</small>"}:::dec
 MOTH["Other cancer models<br/><small>NSCLC, CRC, and so on</small>"]:::det
+HIST{"Histology and grade<br/><small>IDC, core biopsy</small>"}:::dec
+STG{"Staging: concur or flag?<br/><small>cT2N1M0, IIB</small>"}:::dec
+MOL{"Molecular profile<br/><small>NGS, MSI, HRD</small>"}:::dec
+GERM{"Hereditary vs somatic<br/><small>germline BRCA</small>"}:::dec
 SUB{"Disease subtype<br/><small>breast, HER2+</small>"}:::dec
 MBR["Subtype model<br/><small>breast HER2+</small>"]:::det
 SHR["Subtype model<br/><small>HR+, HER2-neg</small>"]:::det
 SHL["Subtype model<br/><small>HER2-low</small>"]:::det
 STN["Subtype model<br/><small>triple-negative</small>"]:::det
 IN --> PARSE --> TERM --> EPI
-BQ -- "IHC 3+" --> SUB
-BQ -- "IHC 2+" --> ISH --> SUB
-BQ -- "0/1+" --> SUB
+BQ -- "IHC 3+" --> MOL
+BQ -- "IHC 2+" --> ISH
+BQ -- "not on file" --> BREQ
+BREQ -. "re-enter" .-> BQ
+ISH -- "amplified" --> MOL
+ISH -- "not amplified" --> MOL
+ISH -- "missing" --> IREQ
+IREQ -. "re-enter" .-> ISH
+BQ -- "0/1+" --> MOL
 EPI --> CTAG
-CTAG -- breast --> BQ
+CTAG -- breast --> HIST
+HIST --> STG
+STG --> BQ
+MOL --> GERM
+GERM --> SUB
 CTAG -- other --> MOTH
 SUB -- "HER2+" --> MBR
 SUB -- "HR+/HER2-neg" --> SHR
@@ -106,7 +122,7 @@ end
 MBR --> FACTORS
 subgraph PLAN["Treatment planning"]
   INTENT{"Setting and intent<br/><small>early-stage, curative</small>"}:::dec
-  ESC{"Nodal or risk?<br/><small>node-positive N1</small>"}:::dec
+  ESC{"Escalate or de-escalate?<br/><small>node-positive N1</small>"}:::dec
   PDE["De-escalate<br/><small>APT, node-negative</small>"]:::det
   PPREF["Preferred regimen<br/><small>dual blockade + taxane</small>"]:::det
   PADAPT{"Response-adapted?<br/><small>pathology at surgery</small>"}:::dec
@@ -259,7 +275,11 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     {a:'PARSE', f:'NORM', t:'Structured extraction', n:'the LLM extraction inside normalize'},
     {a:'TERM', f:'NORM', t:'Terminology', n:'code mapping inside normalize'},
     {a:'EPI', f:'EPI', t:'Episode of Care', n:'the canonical record every engine reads'},
+    {a:'HIST', f:'EPI', t:'Histology and grade', n:'read from the record, requested if missing'},
+    {a:'STG', f:'DEC', t:'Staging, concur or flag', n:'validated against a cited staging rule'},
     {a:'BQ', f:'DEC', t:'Primary biomarker gate', n:'a deterministic rule lookup against the Supabase knowledge tables'},
+    {a:'MOL', f:'DEC', t:'Molecular profile', n:'a deterministic lookup, NGS only if indicated'},
+    {a:'GERM', f:'DEC', t:'Hereditary vs somatic', n:'a deterministic lookup against germline criteria'},
     {a:'SUB', f:'DEC', t:'Subtype model', n:'deterministic routing from the knowledge base'},
     {a:'FACTORS', f:'EPI', t:'Patient factors', n:'read from the Episode'},
     {a:'ESC', f:'DEC', t:'Risk-adapted intensity', n:'a cited rule lookup'},
@@ -297,7 +317,7 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     if(!d.pz) return;
     const n=findNode(d.svgEl, id); if(!n) return;
     n.classList.add('focus'); d.svgEl.classList.add('stepping');
-    try{ const sR=d.stage.getBoundingClientRect(), nR=n.getBoundingClientRect(); if(nR.width>4){ const tz=d.pz.getZoom()*(sR.width*0.4/nR.width); d.pz.zoom(Math.max(0.15,Math.min(tz,12))); } }catch(e){}
+    try{ const sR=d.stage.getBoundingClientRect(), nR=n.getBoundingClientRect(); if(nR.width>4){ const tz=d.pz.getZoom()*(sR.width*0.28/nR.width); d.pz.zoom(Math.max(0.15,Math.min(tz,12))); } }catch(e){}
     requestAnimationFrame(()=>{ try{ const s=d.stage.getBoundingClientRect(), r=n.getBoundingClientRect(); const p=d.pz.getPan(); d.pz.pan({x:p.x+(s.left+s.width/2-(r.left+r.width/2)), y:p.y+(s.top+s.height/2-(r.top+r.height/2))}); }catch(e){} });
   }
   let A=null,B=null,cur=-1,timer=null;

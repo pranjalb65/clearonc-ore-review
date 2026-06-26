@@ -177,23 +177,31 @@ IREQ["Request data<br/><small>reflex ISH</small>"]:::flag
 EPI["Episode of Care<br/><small>triple-positive, Stage IIB</small>"]:::data
 CTAG{"Cancer type<br/><small>breast</small>"}:::dec
 MOTH["Other cancer models<br/><small>NSCLC, CRC, and so on</small>"]:::det
+HIST{"Histology and grade<br/><small>IDC, core biopsy</small>"}:::dec
+STG{"Staging: concur or flag?<br/><small>cT2N1M0, IIB</small>"}:::dec
+MOL{"Molecular profile<br/><small>NGS, MSI, HRD</small>"}:::dec
+GERM{"Hereditary vs somatic<br/><small>germline BRCA</small>"}:::dec
 SUB{"Disease subtype<br/><small>breast, HER2+</small>"}:::dec
 MBR["Subtype model<br/><small>breast HER2+</small>"]:::det
 SHR["Subtype model<br/><small>HR+, HER2-neg</small>"]:::det
 SHL["Subtype model<br/><small>HER2-low</small>"]:::det
 STN["Subtype model<br/><small>triple-negative</small>"]:::det
 IN --> PARSE --> TERM --> EPI
-BQ -- "IHC 3+" --> SUB
+BQ -- "IHC 3+" --> MOL
 BQ -- "IHC 2+" --> ISH
 BQ -- "not on file" --> BREQ
 BREQ -. "re-enter" .-> BQ
-ISH -- "amplified" --> SUB
-ISH -- "not amplified" --> SUB
+ISH -- "amplified" --> MOL
+ISH -- "not amplified" --> MOL
 ISH -- "missing" --> IREQ
 IREQ -. "re-enter" .-> ISH
-BQ -- "0/1+" --> SUB
+BQ -- "0/1+" --> MOL
 EPI --> CTAG
-CTAG -- breast --> BQ
+CTAG -- breast --> HIST
+HIST --> STG
+STG --> BQ
+MOL --> GERM
+GERM --> SUB
 CTAG -- other --> MOTH
 SUB -- "HER2+" --> MBR
 SUB -- "HR+/HER2-neg" --> SHR
@@ -205,7 +213,7 @@ end
 MBR --> FACTORS
 subgraph PLAN["Treatment planning"]
   INTENT{"Setting and intent<br/><small>early-stage, curative</small>"}:::dec
-  ESC{"Nodal or risk?<br/><small>node-positive N1</small>"}:::dec
+  ESC{"Escalate or de-escalate?<br/><small>node-positive N1</small>"}:::dec
   PDE["De-escalate<br/><small>APT, node-negative</small>"]:::det
   PPREF["Preferred regimen<br/><small>dual blockade + taxane</small>"]:::det
   PADAPT{"Response-adapted?<br/><small>pathology at surgery</small>"}:::dec
@@ -317,7 +325,11 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     { id:'PARSE', title:'2. Parse to typed facts', html:'An LLM extracts the record into typed, validated facts: <b>ER+, PR+, HER2 IHC 3+, cT2N1M0, ECOG 1, trastuzumab, paclitaxel</b>. High-stakes fields are cross-checked by a second model. <div class="tagrow"><span class="t">LLM edge</span></div>' },
     { id:'TERM', title:'3. Terminology', html:'The diagnosis code is normalized: <b>ICD-10-CM C50.912 to SNOMED 254837009</b> (malignant neoplasm of breast). ICD is preserved; SNOMED is what the engines reason over, so the case works for US and international partners.' },
     { id:'EPI', title:'5. Episode of Care', html:'The canonical, longitudinal record: triple-positive, Stage IIB, node-positive, with provenance and a confidence on every fact. Every engine reads from this.' },
+    { id:'HIST', title:'Histology', html:'<b>On file:</b> invasive ductal carcinoma on core biopsy, with hormone-receptor and HER2 staining. Grade documents aggressiveness. If tissue were missing, ORE would request a biopsy.' },
+    { id:'STG', title:'Staging', html:'<b>On file:</b> cT2N1M0, clinical Stage IIB (node-positive), from imaging and exam. <b>ORE concurs</b> with this stage, and notes the pathologic stage will refine it after surgery. If the recorded stage looked inconsistent with the findings (occult metastasis, understaged nodes), ORE would flag a consideration; if imaging were missing, it would request it.' },
     { id:'BQ', title:'4. HER2 status (biomarker gating)', html:'<b>IHC 3+ is definitively HER2-positive</b>, no reflex ISH needed. IHC 1+ or 0 would not be actionable; <b>2+ triggers reflex ISH</b>. Only a confirmed positive opens a targeted pathway. <div class="tagrow"><span class="t ok">actionable</span></div>' },
+    { id:'MOL', title:'Molecular profile', html:'HER2 IHC 3+ and ER/PR positive are the actionable findings here. Broad NGS and MSI or HRD are not standard for early HER2-positive breast cancer, so their absence is not a gap.' },
+    { id:'GERM', title:'Hereditary vs somatic', html:'Germline BRCA is untested. Given the diagnosis, ORE flags it as a consideration, it would affect PARP-inhibitor eligibility and family risk-reduction. Conditional, not gating the current plan.' },
     { id:'SUB', title:'6. Breast subtype routing', html:'The episode routes to a subtype model, each with its own pathways and AE profile: <b>HER2+ (this case)</b>, HR+/HER2-negative (endocrine + CDK4/6, Oncotype), HER2-low (T-DXd), triple-negative (chemo + IO, BRCA to PARP). This is why ORE is not one generic model.' },
     { id:'FACTORS', title:'7. Patient factors', html:'<b>On file:</b> ECOG 1 (performance), postmenopausal (age 62), treatment-naive (line 1), no major comorbidity, no recorded allergies. <b>Missing or conditional:</b> a baseline LVEF before trastuzumab (a gap), germline BRCA untested (conditional), and renal, hepatic, and marrow labs (assumed adequate, pending). <div class="tagrow"><span class="t ok">on file</span><span class="t flag">LVEF missing</span></div>' },
     { id:'ESC', title:'8. Escalate or de-escalate', html:'<b>Node-positive (N1) to dual HER2 blockade.</b> Node-negative small tumors de-escalate to paclitaxel + trastuzumab (APT). This patient is N1, so dual blockade is indicated. <div class="tagrow"><span class="t">decision</span></div>' },
@@ -341,6 +353,10 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     TERM:[{t:'ICD-10-CM C50.912',k:'data'},{t:'OMOP Maps to',k:'det'},{t:'SNOMED 254837009',k:'det',c:'the reasoning concept'}],
     BQ:[{t:'HER2 IHC',k:'data'},{t:'Gate on HER2',k:'dec',chips:[{t:'IHC 3+ actionable',k:'det',me:true},{t:'2+ reflex ISH',k:'det'},{t:'0 or 1+ not actionable',k:'det'}]}],
     EPI:[{t:'Typed facts',k:'det'},{t:'Episode of Care',k:'data',c:'triple-positive, Stage IIB, node-positive'}],
+    HIST:[{t:'Tissue sample',k:'data',chips:[{t:'core biopsy',me:true},{t:'FNA'},{t:'excision'}]},{t:'Morphology + grade',k:'det'},{t:'IHC for origin',k:'det'}],
+    STG:[{t:'Recorded stage + findings',k:'data'},{t:'Validate against TNM',k:'dec',chips:[{t:'concur: Stage IIB',k:'det',me:true},{t:'or flag a consideration',k:'flag'}]},{t:'Imaging: CT, MRI, PET',k:'data'}],
+    MOL:[{t:'Molecular tests',k:'data',chips:[{t:'NGS'},{t:'liquid biopsy'},{t:'MSI'},{t:'HRD'}]},{t:'Actionable alteration?',k:'dec'},{t:'HER2+ drives therapy',k:'det'}],
+    GERM:[{t:'Germline test',k:'data',chips:[{t:'BRCA1/2'},{t:'panel'}]},{t:'Tested?',k:'dec',chips:[{t:'untested here',k:'flag'}]},{t:'conditional, consider',k:'det'}],
     SUB:[{t:'Episode',k:'data'},{t:'Subtype router',k:'dec',chips:[{t:'HER2+ (this case)',k:'det',me:true},{t:'HR+ HER2-neg',k:'det'},{t:'HER2-low',k:'det'},{t:'TNBC',k:'det'}]}],
     FACTORS:[{t:'On file',k:'det',chips:[{t:'ECOG 1',k:'det'},{t:'postmenopausal, 62',k:'det'},{t:'treatment-naive, 1L',k:'det'},{t:'no major comorbidity',k:'det'},{t:'no recorded allergies',k:'det'}]},{t:'Missing or conditional',k:'flag',chips:[{t:'baseline LVEF, gap',k:'flag'},{t:'germline BRCA, conditional'},{t:'organ-function labs, pending'}]}],
     ESC:[{t:'Nodal status',k:'dec',chips:[{t:'Node-positive to dual blockade',k:'det',me:true},{t:'Node-negative to APT',k:'det'}]}],
@@ -363,6 +379,10 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     TERM:{t:'Terminology normalization',d:'Source codes map to a standard vocabulary, so the same logic runs across coding systems and countries.'},
     BQ:{t:'Primary biomarker gate',d:'The engine checks whether a result is definitive enough to open a targeted pathway. If the gating result is absent, for example in claims-only data, it requests the result rather than assuming.'},
     EPI:{t:'Episode of Care',d:'Every fact lands in one longitudinal record with its source and a confidence. Every engine reads from this.'},
+    HIST:{t:'Histology and grade',d:'Tissue diagnosis: a biopsy or excision is read for morphology and grade, with IHC to confirm the tumor origin. The gold standard for solid tumors.'},
+    STG:{t:'Staging, concur or flag',d:'Anatomical extent by the TNM system, from imaging (CT, MRI, PET, ultrasound) and clinical markers. A stage is often already recorded, so ORE checks it against the findings and either concurs or flags a consideration. This is decision support, not just a read.'},
+    MOL:{t:'Molecular profile',d:'The molecular fingerprint: NGS for mutations, fusions, and translocations, liquid biopsy of circulating tumor DNA, and genomic instability (MSI, HRD). Finds targetable alterations.'},
+    GERM:{t:'Hereditary vs somatic',d:'Inherited versus acquired: germline testing of normal tissue or blood for hereditary syndromes such as BRCA1/2. Affects the plan and family risk.'},
     SUB:{t:'Subtype stratification',d:'The disease routes to a subtype-specific model, each with its own pathways and risk profile. ORE is not one generic model.'},
     FACTORS:{t:'Patient factors',d:'ORE reads the whole patient, not just the diagnosis: performance status, organ function (cardiac, renal, hepatic, marrow), comorbidity and frailty, age and menopausal status, germline genetics, prior therapy and response, goals of care, and drug interactions and allergies. Each factor is also checked for whether the data is on file.'},
     ESC:{t:'Risk-adapted intensity',d:'Treatment intensity is escalated or de-escalated based on stage and risk.'},
@@ -383,6 +403,10 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     PARSE:['HealthBench','MedHELM'],
     TERM:['MedHELM'],
     BQ:['MTBBench'],
+    HIST:['MedHELM'],
+    STG:['MedGUIDE'],
+    MOL:['MTBBench'],
+    GERM:['internal eval'],
     FACTORS:['HealthBench'],
     SUB:['CancerGUIDE'],
     ESC:['MedGUIDE'],
@@ -409,6 +433,10 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     TERM:[{t:'ICD-10-CM C50.912',k:'data'},{t:'OMOP Maps to',k:'det'},{t:'SNOMED 254837009',k:'ok'}],
     BQ:[{t:'HER2 IHC 3+',k:'data'},{t:'rule: 3+ is definitive HER2+',k:'det'},{t:'ASCO and CAP HER2',k:'cite'},{t:'open HER2 pathway',k:'ok'}],
     EPI:[{t:'all typed facts',k:'data'},{t:'merge and stamp provenance',k:'det'},{t:'Episode of Care',k:'ok'}],
+    HIST:[{t:'core biopsy',k:'data'},{t:'morphology, grade, IHC',k:'det'},{t:'invasive ductal carcinoma',k:'ok'}],
+    STG:[{t:'recorded stage + findings',k:'data'},{t:'validate against TNM',k:'det'},{t:'AJCC',k:'cite'},{t:'concur, or flag',k:'ok'}],
+    MOL:[{t:'HER2, HR status',k:'data'},{t:'NGS not standard in early HER2+',k:'det'},{t:'no extra molecular gap',k:'ok'}],
+    GERM:[{t:'germline status',k:'data'},{t:'testing criteria',k:'det'},{t:'NCCN germline',k:'cite'},{t:'untested, consider',k:'flag'}],
     SUB:[{t:'HER2+ and HR+',k:'data'},{t:'rule: subtype router',k:'det'},{t:'triple-positive model',k:'ok'}],
     FACTORS:[{t:'patient record',k:'data'},{t:'check each factor on file',k:'det'},{t:'flag what is missing',k:'flag'}],
     ESC:[{t:'N1 node-positive',k:'data'},{t:'rule: node-positive escalates',k:'det'},{t:'dual blockade',k:'ok'}],
@@ -433,6 +461,10 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
   }
   const REL = {
     BQ:['BQ','ISH','BREQ','IREQ'],
+    HIST:['HIST'],
+    STG:['STG'],
+    MOL:['MOL'],
+    GERM:['GERM'],
     SUB:['SUB','MBR','SHR','SHL','STN'],
     ESC:['ESC','PPREF','PDE'],
     PPREF:['PPREF','PADAPT','PTDM1','PCOMP','PENDO','LOCO','MDT','SUPP'],
@@ -473,7 +505,7 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     const nodes=[...svgEl.querySelectorAll('g.node')];
     return nodes.find(e=>e.id && (e.id==='flowchart-'+id || e.id.startsWith('flowchart-'+id+'-') || e.id.indexOf('-'+id+'-')>-1)) || null;
   }
-  function zoomToNode(n){ try{var sR=document.getElementById('stage').getBoundingClientRect();var nR=n.getBoundingClientRect();if(nR.width>4){var tz=pz.getZoom()*(sR.width*0.32/nR.width);pz.zoom(Math.max(0.2,Math.min(tz,12)));}}catch(e){} }
+  function zoomToNode(n){ try{var sR=document.getElementById('stage').getBoundingClientRect();var nR=n.getBoundingClientRect();if(nR.width>4){var tz=pz.getZoom()*(sR.width*0.22/nR.width);pz.zoom(Math.max(0.2,Math.min(tz,12)));}}catch(e){} }
   function focusNode(id){
     svgEl && svgEl.querySelectorAll('g.node.focus, g.node.rel').forEach(function(e){e.classList.remove('focus');e.classList.remove('rel');});
     if(!pz || !svgEl) return;
