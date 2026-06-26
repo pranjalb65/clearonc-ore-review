@@ -7,13 +7,13 @@
 <style>
   :root{--ink:#0e1622;--muted:#5b6b7a;--faint:#8595a4;--line:#e4e9ef;--bg:#eef1f6;--panel:#fff;--blue:#1f6feb;--green:#15803d;--amber:#b45309;--violet:#6d4aff;--slate:#64748b;--red:#b91c1c;--catch:#db2777;--fill-data:#eef4ff;--fill-det:#e7f6ec;--fill-llm:#fdf1e3;--fill-out:#f0ecff;--fill-dec:#fff;--fill-flag:#fcebec;--fill-catch:#fce7f3}
   *{box-sizing:border-box}
-  html,body{margin:0;height:100%}
+  html,body{margin:0;height:100%;overflow:hidden}
   body{background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
-  .wrap{max-width:1480px;margin:0 auto;padding:32px 28px 48px}
-  .hero{background:linear-gradient(135deg,#11213b,#1f3b73 55%,#2563c9);color:#fff;border-radius:16px;padding:22px 26px;box-shadow:0 10px 30px rgba(20,40,80,.18)}
+  .wrap{max-width:1480px;margin:0 auto;padding:10px 16px;height:100vh;display:flex;flex-direction:column;gap:8px}
+  .hero{background:linear-gradient(135deg,#11213b,#1f3b73 55%,#2563c9);color:#fff;border-radius:16px;padding:11px 20px;box-shadow:0 10px 30px rgba(20,40,80,.18)}
   .hero .brand{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#cfe0f5;font-weight:700;margin:0 0 6px}
-  .hero h1{font-size:32px;margin:0 0 6px;letter-spacing:-.02em}
-  .hero p{margin:0;color:#e8f1fc;font-size:15px;max-width:980px}
+  .hero h1{font-size:19px;margin:0 0 3px;letter-spacing:-.02em}
+  .hero p{margin:0;color:#e8f1fc;font-size:12px;max-width:980px}
   .hero p .arch{display:block;margin-top:8px;color:#dbe7fa;font-size:13.5px}
   .hero p .arch b{color:#fff}
   .context{background:#f7f9fc;border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:14px 0;box-shadow:0 8px 28px rgba(20,40,80,.08)}
@@ -25,8 +25,8 @@
   .legend .note{display:block;flex-basis:100%;margin-top:8px;color:var(--muted);font-size:13px}
   .legend .note b{color:var(--ink)}
 
-  .board{display:flex;gap:14px;align-items:stretch}
-  #stage{position:relative;flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:16px;height:78vh;min-height:540px;overflow:hidden;box-shadow:0 8px 28px rgba(20,40,80,.08)}
+  .board{display:flex;gap:14px;align-items:stretch;flex:1;min-height:0}
+  #stage{position:relative;flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:16px;min-height:0;overflow:hidden;box-shadow:0 8px 28px rgba(20,40,80,.08)}
   #stage:fullscreen{height:100vh;border-radius:0}
   #diagram{width:100%;height:100%}
   #diagram svg{width:100%;height:100%;display:block;cursor:grab}#diagram svg:active{cursor:grabbing}
@@ -66,7 +66,7 @@
   .toolbar button:focus-visible, #panel .nav button:focus-visible, #diagram:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
   @media(max-width:980px){.board{flex-direction:column}#panel{width:auto}#stage{height:60vh}}
   @media (prefers-reduced-motion: reduce){#diagram svg g.node, .toolbar button, #panel .nav button, #diagram svg.stepping g.node:not(.focus){transition:none !important}}
-  footer{margin-top:14px;color:var(--muted);font-size:11.5px;border-top:1px solid var(--line);padding-top:12px}
+  footer{margin-top:0;color:var(--muted);font-size:10.5px;border-top:1px solid var(--line);padding-top:6px}
   footer b{color:var(--ink)}
   #panel>div[aria-live]{flex:1;display:flex;flex-direction:column;min-height:0}
   #panel .flow{margin-top:16px;display:flex;flex-direction:column;align-items:stretch}
@@ -110,8 +110,8 @@
   #diagram svg g.node.rel rect,#diagram svg g.node.rel polygon{stroke:var(--blue)!important;stroke-width:2.4px!important}
   #diagram svg g.node.rel{filter:drop-shadow(0 0 5px rgba(31,111,235,.45))}
   .embed .hero{display:none}
-  .embed .wrap{padding:14px 28px 16px}
-  .embed .board{height:calc(100vh - 235px);min-height:380px}
+  .embed .wrap{padding:8px 16px}
+  .embed .board{min-height:0}
   .embed #stage{height:auto;min-height:0}
   .embed #panel{min-height:0}
   .context{padding:11px 16px}
@@ -119,6 +119,7 @@
   #diagram svg .node small{font-weight:400;font-size:0.82em;opacity:.66;line-height:1.25}
   #diagram svg .edgeLabel,#diagram svg .edgeLabel foreignObject{overflow:visible}
   .sw.vchk{width:auto;height:auto;border:none;background:none;color:var(--blue);font-size:13px;font-weight:900}
+  main{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
 </style>
 </head>
 <body>
