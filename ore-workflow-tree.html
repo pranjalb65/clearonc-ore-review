@@ -47,7 +47,7 @@
   .toolbar button:hover{background:#e4ecf6}.toolbar .lbl{width:auto;padding:0 10px;font-size:13px}
   .toolbar button svg{width:18px;height:18px;display:block}
 
-  #panel{width:480px;flex:none;background:var(--panel);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;box-shadow:0 8px 28px rgba(20,40,80,.08);overflow:hidden}
+  #panel{width:500px;flex:none;background:var(--panel);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;box-shadow:0 8px 28px rgba(20,40,80,.08);overflow:hidden}
   #panel .ph{padding:14px 16px 10px;border-bottom:1px solid var(--line)}
   #panel .step{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--blue)}
   #panel h2{font-size:17px;margin:4px 0 0;letter-spacing:-.01em}
@@ -549,7 +549,7 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     document.getElementById('ptitle').textContent=st.title.replace(/^\d+\.\s*/,'');
     var A=ARCH[st.id]||{};
     if(A.t) document.getElementById('ptitle').textContent=A.t;
-    document.getElementById('pbody').innerHTML=(A.d?'<div class="archline">'+A.d+'</div>':'')+renderDeriv(st.id)+'<div class="incase"><span class="ic">In this case</span> '+st.html+'</div>'+renderFlow(FLOWS[st.id])+renderBench(st.id);
+    document.getElementById('pbody').innerHTML=(A.d?'<div class="archline">'+A.d+'</div>':'')+renderDeriv(st.id)+'<div class="incase"><span class="ic">In this case</span> '+st.html+'</div>'+renderBench(st.id);
     prev.disabled = cur===0;
     next.disabled = cur===steps.length-1;
     focusNode(st.id);
