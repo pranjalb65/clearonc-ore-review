@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ORE, AI Architecture</title>
+<style>
+  :root{--ink:#0e1622;--muted:#5b6b7a;--faint:#8595a4;--line:#e4e9ef;--bg:#eef1f6;--panel:#fff;--blue:#1f6feb;--green:#15803d;--amber:#b45309;--violet:#6d4aff;--slate:#64748b;--red:#b91c1c;--catch:#db2777;--fill-data:#eef4ff;--fill-det:#e7f6ec;--fill-llm:#fdf1e3;--fill-out:#f0ecff;--fill-dec:#fff;--fill-flag:#fcebec;--fill-catch:#fce7f3}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;overflow:hidden}
+  body{background:var(--bg);color:var(--ink);font:14px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1480px;margin:0 auto;padding:10px 16px;height:100vh;display:flex;flex-direction:column;gap:8px}
+  .hero{background:linear-gradient(135deg,#11213b,#1f3b73 55%,#2563c9);color:#fff;border-radius:16px;padding:11px 20px;box-shadow:0 10px 30px rgba(20,40,80,.18)}
+  .hero .brand{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#cfe0f5;font-weight:700;margin:0 0 6px}
+  .hero h1{font-size:19px;margin:0 0 3px;letter-spacing:-.02em}
+  .hero p{margin:0;color:#e8f1fc;font-size:12px;max-width:980px}
+  .hero p .arch{display:block;margin-top:8px;color:#dbe7fa;font-size:13.5px}
+  .hero p .arch b{color:#fff}
+  .context{background:#f7f9fc;border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin:14px 0;box-shadow:0 8px 28px rgba(20,40,80,.08)}
+  .case{font-size:12.5px;color:var(--muted);margin:0 0 12px} .case b{color:var(--ink)}
+  .legend{display:flex;gap:13px;flex-wrap:wrap;font-size:13.5px;margin:0}
+  .legend span{display:inline-flex;align-items:center;gap:6px;color:var(--muted)}
+  .sw{width:11px;height:11px;border-radius:4px;border:1px solid}
+  .sw.data{background:var(--fill-data);border-color:var(--blue)}.sw.det{background:var(--fill-det);border-color:var(--green)}.sw.llm{background:var(--fill-llm);border-color:var(--amber)}.sw.out{background:var(--fill-out);border-color:var(--violet)}.sw.dec{background:var(--fill-dec);border-color:var(--slate)}.sw.flag{background:var(--fill-flag);border-color:var(--red)}.sw.catch{background:var(--fill-catch);border-color:var(--catch)}
+  .legend .note{display:block;flex-basis:100%;margin-top:8px;color:var(--muted);font-size:13px}
+  .legend .note b{color:var(--ink)}
+
+  .board{display:flex;gap:14px;align-items:stretch;flex:1;min-height:0}
+  #stage{position:relative;flex:1;min-width:0;background:var(--panel);border:1px solid var(--line);border-radius:16px;min-height:0;overflow:hidden;box-shadow:0 8px 28px rgba(20,40,80,.08)}
+  #stage:fullscreen{height:100vh;border-radius:0}
+  #diagram{width:100%;height:100%}
+  #diagram svg{width:100%;height:100%;display:block;cursor:grab}#diagram svg:active{cursor:grabbing}
+  #diagram svg .node rect,#diagram svg .node polygon,#diagram svg .node path{filter:drop-shadow(0 1px 2px rgba(15,23,32,.12))}
+  #diagram svg .node rect{rx:9px;ry:9px}
+  #diagram svg .nodeLabel{font-weight:600}
+  #diagram svg .node foreignObject{overflow:visible}
+  #diagram svg .edgeLabel{font-weight:600}
+  #diagram svg .edgeLabel foreignObject>div{background:#fff;padding:1px 4px;border-radius:4px}
+  #diagram svg .cluster rect{rx:15px;ry:15px;fill:#fafcff;stroke:#d8e0ea}
+  #diagram svg .cluster text{font-weight:700;fill:var(--slate)}
+  #diagram svg g.node.focus rect,#diagram svg g.node.focus polygon{stroke:var(--blue)!important;stroke-width:3.5px!important}
+  #diagram svg g.node.focus{filter:drop-shadow(0 0 0 2px #fff) drop-shadow(0 0 6px rgba(31,111,235,.55))}
+  #diagram svg.stepping g.node:not(.focus):not(.rel){opacity:.3;transition:opacity .2s}
+  #diagram svg g.node.clickable{cursor:pointer}
+  .toolbar{position:absolute;top:12px;right:12px;display:flex;gap:6px;background:rgba(255,255,255,.92);backdrop-filter:blur(6px);border:1px solid var(--line);border-radius:11px;padding:6px;box-shadow:0 6px 18px rgba(20,40,80,.12);z-index:5}
+  .toolbar button{width:38px;height:38px;border:none;background:#f3f6fa;border-radius:8px;color:var(--ink);font-size:17px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
+  .toolbar button:hover{background:#e4ecf6}.toolbar .lbl{width:auto;padding:0 10px;font-size:13px}
+  .toolbar button svg{width:18px;height:18px;display:block}
+
+  #panel{width:480px;flex:none;background:var(--panel);border:1px solid var(--line);border-radius:16px;display:flex;flex-direction:column;box-shadow:0 8px 28px rgba(20,40,80,.08);overflow:hidden}
+  #panel .ph{padding:14px 16px 10px;border-bottom:1px solid var(--line)}
+  #panel .step{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--blue)}
+  #panel h2{font-size:17px;margin:4px 0 0;letter-spacing:-.01em}
+  #panel .body{padding:12px 16px;overflow:auto;flex:1;font-size:13.2px;line-height:1.5}
+  #panel .body a{color:var(--blue);text-decoration:underline}#panel .body a:hover{text-decoration:underline}
+  #panel .body .tagrow{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+  #panel .body .t{font-size:12px;font-weight:600;border-radius:5px;padding:2px 7px;background:#eef1f5;color:#475569}
+  #panel .body .t.flag{background:#fcebec;color:var(--red)}.t.ok{background:#e7f6ec;color:#13702f}.t.cite{background:#eef4ff;color:#1452c9}
+  #panel .nav{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--line);align-items:center}
+  #panel .nav button{flex:1;border:1px solid var(--line);background:#f6f8fb;border-radius:9px;padding:9px 0;font-size:13px;font-weight:600;cursor:pointer}
+  #panel .nav button:hover:not(:disabled){background:#eaf0f7}
+  #panel .nav button:disabled{opacity:.45;cursor:default;background:#f0f3f7}
+  #panel .nav button.primary{background:var(--blue);color:#fff;border-color:var(--blue)}
+  #panel .nav button.primary:hover:not(:disabled){background:#1a5fd0}
+  #panel .nav .play{flex:none;width:40px}
+  .toolbar button:focus-visible, #panel .nav button:focus-visible, #diagram:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+  @media(max-width:980px){.board{flex-direction:column}#panel{width:auto}#stage{height:60vh}}
+  @media (prefers-reduced-motion: reduce){#diagram svg g.node, .toolbar button, #panel .nav button, #diagram svg.stepping g.node:not(.focus){transition:none !important}}
+  footer{margin-top:0;color:var(--muted);font-size:10.5px;border-top:1px solid var(--line);padding-top:6px}
+  footer b{color:var(--ink)}
+  #panel>div[aria-live]{flex:1;display:flex;flex-direction:column;min-height:0}
+  #panel .flow{margin-top:10px;display:flex;flex-direction:column;align-items:stretch}
+  #panel .flow .fn{border:1px solid var(--line);border-radius:10px;padding:8px 11px;font-size:13px;font-weight:600;background:#f7f9fc;color:var(--ink);text-align:center}
+  #panel .flow .fn .fc{display:block;font-weight:400;font-size:11.5px;color:var(--muted);margin-top:2px}
+  #panel .flow .fn.data{background:var(--fill-data);border-color:#bcd3f5}
+  #panel .flow .fn.det{background:var(--fill-det);border-color:#bfe3cb}
+  #panel .flow .fn.llm{background:var(--fill-llm);border-color:#f0d8ad}
+  #panel .flow .fn.out{background:var(--fill-out);border-color:#d8cdf7}
+  #panel .flow .fn.flag{background:var(--fill-flag);border-color:#f3c9cd;color:var(--red)}
+  #panel .flow .fn.catch{background:var(--fill-catch);border-color:#f4c6df;color:var(--catch)}
+  #panel .flow .fn.dec{background:#fff;border-color:var(--slate)}
+  #panel .flow .fn.me{box-shadow:0 0 0 2px var(--blue);border-color:var(--blue)}
+  #panel .flow .farr{color:var(--faint);text-align:center;font-size:13px;line-height:1;margin:4px 0}
+  #panel .flow .fchips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:2px}
+  #panel .flow .fchip{font-size:11.5px;font-weight:600;border:1px solid var(--line);border-radius:999px;padding:3px 9px;background:#fff;color:#475569}
+  #panel .flow .fchip.det{background:var(--fill-det);border-color:#bfe3cb;color:#13702f}
+  #panel .flow .fchip.me{border-color:var(--blue);background:#eef4ff;color:#1452c9}
+  #panel .flow .fchip.catch{background:var(--fill-catch);border-color:#f4c6df;color:var(--catch)}
+  #panel .flow .fchip.flag{background:var(--fill-flag);border-color:#f3c9cd;color:var(--red)}
+  #panel .archline{font-size:13px;color:var(--ink);margin:0 0 8px;padding:0 0 8px;border-bottom:1px dashed var(--line)}
+  #panel .incase{font-size:13.3px;line-height:1.55}
+  #panel .incase .ic{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--blue);background:#eef4ff;border-radius:5px;padding:2px 7px;margin-right:6px}
+  #panel .bench{margin-top:9px;padding-top:8px;border-top:1px dashed var(--line);display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+  #panel .bench .bl{font-size:10.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--faint);margin-right:2px}
+  #panel .bench .bp{font-size:11.5px;font-weight:600;border:1px solid #d8e0ea;border-radius:6px;padding:3px 8px;background:#f4f7fb;color:#475569}
+  .legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 16px;font-size:13px;margin:0}
+  .legend .li{display:flex;flex-direction:column;gap:2px;color:var(--muted)}
+  .legend .li .lh{display:inline-flex;align-items:center;gap:6px;font-weight:700;color:var(--ink);font-size:12.5px}
+  .legend .li .ld{font-size:11.5px;color:var(--muted);line-height:1.4}
+  #diagram svg g.node.rel rect,#diagram svg g.node.rel polygon{stroke:var(--blue)!important;stroke-width:2.4px!important}
+  #diagram svg g.node.rel{filter:drop-shadow(0 0 5px rgba(31,111,235,.45))}
+  .embed .hero{display:none}
+  .embed .wrap{padding:8px 16px}
+  .embed .board{min-height:0}
+  .embed #stage{height:auto;min-height:0}
+  .embed #panel{min-height:0}
+  .context{padding:11px 16px}
+  .legend{grid-template-columns:repeat(auto-fit,minmax(172px,1fr));gap:8px 14px}
+  #diagram svg .edgeLabel,#diagram svg .edgeLabel foreignObject{overflow:visible}
+  .sw.vchk{width:auto;height:auto;border:none;background:none;color:var(--blue);font-size:13px;font-weight:900}
+  main{flex:1;min-height:0;display:flex;flex-direction:column;gap:8px}
+  .legend .li .ld{display:none}
+  .legend{grid-template-columns:repeat(auto-fit,minmax(118px,1fr));gap:4px 14px}
+  .context{padding:7px 14px}
+</style>
+</head>
+<body>
+<script>try{if(window.self!==window.top)document.documentElement.classList.add('embed')}catch(e){document.documentElement.classList.add('embed')}</script>
+<div class="wrap">
+  <div class="hero">
+    <div class="brand">ORE</div>
+    <h1>ORE AI Architecture</h1>
+    <p>How the standard parts of an AI system (knowledge graph, RAG, agents, skills, handoff, evals, fine-tuning, guardrails) compose into ORE. Step through each part in the side panel, or drag to explore.
+    <span class="arch">The center is a <b>deterministic core</b>: skills that look up cited rules in the knowledge graph. Everything a model does (amber) only reads, grounds, or explains. <b>The decisions are deterministic and cited, the model never decides, and fine-tuning never touches the decision logic.</b></span></p>
+  </div>
+  <main>
+  <div class="context">
+    <p class="case"><b>The same architecture runs for every patient and every cancer type. The knowledge graph is what varies, not the machinery.</b></p>
+    <div class="legend">
+      <span class="li"><span class="lh"><span class="sw data"></span> knowledge and data</span><span class="ld">The Episode, the knowledge graph, the vector index.</span></span><span class="li"><span class="lh"><span class="sw det"></span> deterministic skill</span><span class="ld">A cited, rule-based engine module. The core.</span></span><span class="li"><span class="lh"><span class="sw llm"></span> model agent</span><span class="ld">Read, ground, explain, council. Never decides.</span></span><span class="li"><span class="lh"><span class="sw out"></span> output</span><span class="ld">The cited physician view and patient summary.</span></span><span class="li"><span class="lh"><span class="sw dec"></span> routing and gate</span><span class="ld">Orchestration, the eval gate, physician sign-off.</span></span><span class="li"><span class="lh"><span class="sw flag"></span> guardrail</span><span class="ld">PHI de-id, cite-or-abstain, the deterministic gate.</span></span><span class="li"><span class="lh"><span class="sw catch"></span> fine-tuning</span><span class="ld">Edge only (extraction, phrasing), gated, optional.</span></span><span class="li"><span class="lh"><span class="sw vchk">&#10003;</span> validation</span><span class="ld">Gold cases plus public benchmarks, calibrated.</span></span>
+    </div>
+  </div>
+
+  <div class="board">
+    <div id="stage" role="region" aria-label="AI architecture diagram">
+      <div class="toolbar" role="toolbar" aria-label="Diagram controls">
+        <button id="zout" title="Zoom out" aria-label="Zoom out">&minus;</button><button id="zin" title="Zoom in" aria-label="Zoom in">+</button>
+        <button id="zfit" class="lbl" title="Fit whole map" aria-label="Fit whole map">Fit</button><button id="zfull" title="Enter fullscreen" aria-label="Enter fullscreen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      </div>
+      <div id="diagram" tabindex="0" role="application" aria-label="ORE AI architecture, pannable. Arrow keys pan, plus and minus zoom, zero fits."></div>
+    </div>
+    <div id="panel" role="region" aria-label="Walkthrough">
+      <div aria-live="polite" aria-atomic="true">
+        <div class="ph"><div class="step" id="pstep">Walkthrough</div><h2 id="ptitle">Press Next to begin</h2></div>
+        <div class="body" id="pbody">Step through the eight AI-stack parts one at a time, or click Fit and drag to explore the whole map. Each step pans to the part, highlights it, and shows how it maps onto ORE.</div>
+      </div>
+      <div class="nav">
+        <button id="prev"><span aria-hidden="true">&#9664;</span> Prev</button>
+        <button id="play" class="play" title="Play walkthrough" aria-label="Play walkthrough" aria-pressed="false"><span aria-hidden="true">&#9654;</span></button>
+        <button id="next" class="primary">Next <span aria-hidden="true">&#9654;</span></button>
+      </div>
+    </div>
+  </div>
+  </main>
+  <footer><b>Decision support, not a medical device.</b> The model reads, grounds, and explains. Every clinical decision is a deterministic lookup against a cited, versioned rule. A licensed physician reviews and signs.</footer>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+
+  const graph = `flowchart LR
+EPI["Episode of Care<br/><small>the patient graph</small>"]:::data
+ORCH{"Orchestrator and handoff<br/><small>routes every step</small>"}:::dec
+AREAD["Agent: read<br/><small>notes to typed facts</small>"]:::llm
+EPI --> ORCH
+ORCH --> AREAD
+AREAD --> EPI
+subgraph CORE["Deterministic core"]
+  SKILL["Skills<br/><small>engine modules as tools</small>"]:::det
+  KG[("Knowledge graph<br/><small>cited rules, SNOMED and OMOP</small>")]:::data
+  SKILL --> KG
+end
+ORCH --> SKILL
+SKILL --> RAG["RAG: ground<br/><small>evidence retrieval</small>"]:::llm
+RAG --> VEC[("pgvector<br/><small>literature, guideline text</small>")]:::data
+SKILL --> AEXP["Agent: explain<br/><small>cited rule to rationale</small>"]:::llm
+RAG --> AEXP
+ORCH --> COUNCIL["Council and tumor-board agents<br/><small>cross-check, deliberate</small>"]:::llm
+COUNCIL --> GUARD
+SKILL --> GUARD{"Guardrails<br/><small>PHI, cite-or-abstain, gate</small>"}:::flag
+AEXP --> GUARD
+GUARD -- pass --> OUT["Cited output<br/><small>physician and patient</small>"]:::out
+GUARD -- abstain --> HANDOFF["Handoff to human or tumor board"]:::flag
+OUT --> SIGN{"Physician signs"}:::dec
+SIGN --> FB["Feedback, gated"]:::det
+subgraph KNOW["Knowledge ingestion, gated and versioned"]
+  API["Source guidelines<br/><small>NCCN, ASCO and CAP, AJCC, CPIC, CIViC, trials</small>"]:::data
+  ING["Normalize and version snapshot"]:::det
+  API --> ING
+end
+EVAL{"Evals<br/><small>gold cases, benchmarks, calibration</small>"}:::dec
+ING --> EVAL
+FB --> EVAL
+EVAL -- pass --> KG
+EVAL -- pass --> VEC
+FT["Fine-tuning, edge only<br/><small>extraction and phrasing, de-identified</small>"]:::catch
+FB -.-> FT
+FT -.-> EVAL
+classDef data fill:#eef4ff,stroke:#1f6feb,color:#0e1622;
+classDef det fill:#e7f6ec,stroke:#15803d,color:#0e1622;
+classDef llm fill:#fdf1e3,stroke:#b45309,color:#0e1622,stroke-dasharray:4 2;
+classDef out fill:#f0ecff,stroke:#6d4aff,color:#0e1622;
+classDef dec fill:#ffffff,stroke:#64748b,color:#0e1622;
+classDef flag fill:#fcebec,stroke:#b91c1c,color:#0e1622,stroke-width:2px;
+classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
+
+  const steps = [
+    { id:'EPI', title:'EPI', html:'ORE is a <b>deterministic core</b> (skills that look up cited rules in a knowledge graph) wrapped by model agents that only read, ground, and explain, with guardrails, evals, and a gated learning loop around it. The eight standard AI-stack parts all map onto this. Every fact lands here first, with its source and a confidence, and the same machinery re-runs as new data arrives.' },
+    { id:'KG', title:'KG', html:'<b>The source of truth.</b> Every deterministic decision is a lookup here. A rule is small, cited, and version-stamped, so a recommendation is reproducible and auditable. This is where "use a specific guideline for one decision" lives: the binding (staging to AJCC, HER2 scoring to ASCO and CAP) is a property of the rule, not something a model picks at runtime.' },
+    { id:'RAG', title:'RAG', html:'RAG <b>grounds the explanation, it does not make the decision.</b> Semantic search over the literature and guideline text surfaces the supporting passages and citations after a rule fires. Cite-or-drop: a sentence with no retrieved support is dropped, not shown. Letting a fuzzy search choose the governing guideline is exactly the failure mode ORE avoids.' },
+    { id:'SKILL', title:'SKILL', html:'Each <b>skill is one decision node from the architecture</b>, exposed as a callable tool with a fixed input and output contract: staging-validator, biomarker gate, concordance checker, line-of-therapy, AE and PGx screen, trial matcher, completeness and gap. The model never does the clinical math, it calls a skill and the skill returns a cited answer from the knowledge graph.' },
+    { id:'AREAD', title:'AREAD', html:'Three model roles, none of them a decision. The <b>read</b> agent turns notes and reports into typed facts in the Episode. The <b>explain</b> agent turns a cited rule result into language a clinician and a patient can act on. They move information, they do not choose the answer.' },
+    { id:'COUNCIL', title:'COUNCIL', html:'For the hardest or highest-stakes calls, several models cross-check one another and specialist agents (medical, surgical, and radiation oncology, pathology, genetics) deliberate like a multidisciplinary tumor board. The council does not vote a clinical decision into being, it stress-tests the cited result and the explanation. Persistent disagreement triggers a handoff to a human.' },
+    { id:'ORCH', title:'ORCH', html:'The control layer that routes work: stage to stage, agent to skill, model to model, and the two handoffs that matter, to the human (physician sign-off) and to the tumor board when ORE abstains. Handoff is explicit. ORE either returns a cited answer or hands off, it does not paper over uncertainty.' },
+    { id:'GUARD', title:'GUARD', html:'<b>Enforcement, not storage.</b> The standing safety policy around every step: PHI is de-identified before any external model, every decision must resolve to an approved and versioned source or ORE abstains (cite-or-abstain), RAG is cite-or-drop, the deterministic gate means the model proposes but the rule disposes, and a licensed physician signs. This is what makes "we always cite a specific guideline, or we abstain" a rule the system cannot skip.' },
+    { id:'EVAL', title:'EVAL', html:'<b>The release gate, not a runtime step.</b> Every knowledge or model change must pass a gold-case regression suite, the public clinical benchmarks per stage, and confidence-score calibration before it reaches the knowledge graph or the vector index. A guideline update, a new rule, or a model change re-runs the suite, and a regression blocks the release.' },
+    { id:'FT', title:'FT', html:'<b>The part most teams get wrong.</b> ORE does not fine-tune a model to "be the oncologist." Fine-tuning is optional and bounded to edge tasks (extraction accuracy and explanation style), on de-identified data, and only after the eval gate. The core never learns the decisions, those stay deterministic and cited (the anti-Watson rule).' },
+    { id:'ING', title:'ING', html:'Source guidelines and databases are normalized, version-snapshotted, and passed through the eval gate before they populate the knowledge graph and the vector index. When a guideline updates, the knowledge changes, not the architecture, and every snapshot is versioned so any past recommendation can be reproduced against the rules in force at the time.' },
+  ];
+
+  const FLOWS = {
+    EPI:[{t:'Any channel in',k:'data',chips:[{t:'EHR (FHIR)'},{t:'HIE'},{t:'claims'},{t:'upload'}]},{t:'One patient graph',k:'det',c:'source and confidence on every fact'}],
+    KG:[{t:'Patient facts + question',k:'data'},{t:'Match the rule',k:'det'},{t:'Rule + its citation',k:'det',c:'AJCC, NCCN, ASCO/CAP, CPIC'}],
+    RAG:[{t:'Decision + claim',k:'det'},{t:'Vector search (pgvector)',k:'llm'},{t:'Ranked passages + PMIDs',k:'det',c:'grounds, never decides'}],
+    SKILL:[{t:'Typed inputs',k:'data'},{t:'Deterministic module',k:'det',chips:[{t:'staging'},{t:'biomarker gate'},{t:'line of therapy'},{t:'trial match'}]},{t:'Cited result',k:'det'}],
+    AREAD:[{t:'Read: notes to facts',k:'llm'},{t:'Explain: rule to rationale',k:'llm'},{t:'always cited',k:'det'}],
+    COUNCIL:[{t:'Hard or high-stakes call',k:'dec'},{t:'Models and specialists cross-check',k:'llm'},{t:'Agree, or hand off',k:'flag'}],
+    ORCH:[{t:'Next step',k:'dec'},{t:'Route',k:'det',chips:[{t:'to a skill'},{t:'to an agent'},{t:'to the council'},{t:'to a human'}]}],
+    GUARD:[{t:'De-identify PHI',k:'det'},{t:'Cite-or-abstain',k:'flag'},{t:'Deterministic gate',k:'det'},{t:'Physician signs',k:'dec'}],
+    EVAL:[{t:'Candidate change',k:'data'},{t:'Gold cases + benchmarks',k:'det'},{t:'Pass to release, or block',k:'dec'}],
+    FT:[{t:'De-identified edge data',k:'data'},{t:'Tune extraction + phrasing',k:'catch'},{t:'Gated by evals',k:'det'}],
+    ING:[{t:'Source guidelines',k:'data',chips:[{t:'NCCN'},{t:'ASCO/CAP'},{t:'AJCC'},{t:'CPIC'},{t:'CIViC'},{t:'trials'}]},{t:'Normalize + version',k:'det'},{t:'Eval gate',k:'det'}],
+  };
+  const ARCH = {
+    EPI:{t:'The whole picture',d:'A deterministic core wrapped by bounded model roles, with knowledge, guardrails, evals, and a gated learning loop. The Episode of Care is the patient graph every part reads from.'},
+    KG:{t:'Knowledge graph',d:'The structured, cited clinical knowledge ORE reasons over: rules that map findings to actions over a SNOMED and OMOP terminology backbone, each bound to a named, versioned guideline. The source of truth.'},
+    RAG:{t:'RAG layer (evidence grounding)',d:'Semantic retrieval over a literature and guideline-text index. It grounds and explains a decision after the rule fires and surfaces the citations. It never selects the rule.'},
+    SKILL:{t:'Skills (the engine modules)',d:'The deterministic stages exposed as callable tools with typed contracts. Agents call skills, skills query the knowledge graph and return a cited result.'},
+    AREAD:{t:'Agents (bounded model roles)',d:'The language-model roles, each scoped: read (extract facts into the Episode), ground (run RAG), explain (write the rationale). They move information, they do not decide.'},
+    COUNCIL:{t:'Council and tumor-board agents',d:'Several models cross-check one another and specialist agents deliberate like a multidisciplinary tumor board on the hardest calls. Agreement raises confidence, disagreement is surfaced.'},
+    ORCH:{t:'Handoff and orchestration',d:'The control layer that routes work between stages, agents, skills, and models, and hands off to the human or the tumor board on abstention.'},
+    GUARD:{t:'Guardrails',d:'The standing safety policy: PHI de-identification, cite-or-abstain, RAG cite-or-drop, the deterministic gate (model proposes, rule disposes), and physician sign-off.'},
+    EVAL:{t:'Evals',d:'The quality gate every knowledge or model change must pass: a gold-case regression suite, public clinical benchmarks per stage, and calibration of the confidence scores.'},
+    FT:{t:'Fine-tuning (edge only, gated)',d:'Deliberately not used for decisions. Optional and bounded to extraction accuracy and explanation style, on de-identified data, only after the eval gate. The core never learns the decisions.'},
+    ING:{t:'Knowledge ingestion (gated, versioned)',d:'Source guidelines and databases are normalized, version-snapshotted, and passed through the eval gate before they populate the knowledge graph and the vector index.'},
+  };
+  const BENCH = {
+    KG:['provenance + version pin'],
+    AREAD:['HealthBench','MedHELM'],
+    EVAL:['MedGUIDE','MTBBench','HealthBench'],
+    ING:['eval + benchmark gate'],
+  };
+  function renderBench(id){
+    var b=BENCH[id]; if(!b||!b.length) return '';
+    return '<div class="bench"><span class="bl">Validated by</span>'+b.map(function(x){return '<span class="bp">'+x+'</span>';}).join('')+'</div>';
+  }
+  const REL = {
+    EPI:['EPI','ORCH','AREAD'],
+    KG:['KG','SKILL'],
+    RAG:['RAG','VEC','AEXP'],
+    SKILL:['SKILL','KG','RAG'],
+    AREAD:['AREAD','AEXP','EPI'],
+    COUNCIL:['COUNCIL','ORCH','GUARD'],
+    ORCH:['ORCH','HANDOFF','SIGN'],
+    GUARD:['GUARD','HANDOFF','SIGN'],
+    EVAL:['EVAL','KG','VEC','ING'],
+    FT:['FT','EVAL','FB'],
+    ING:['API','ING','EVAL'],
+  };
+  function renderFlow(flow){
+    if(!flow||!flow.length) return '';
+    var cap=function(it){return it.c?'<span class="fc">'+it.c+'</span>':'';};
+    var node=function(it){return '<div class="fn '+(it.k||'dec')+(it.me?' me':'')+'">'+it.t+cap(it)+'</div>';};
+    var h='<div class="flow" aria-hidden="true">';
+    flow.forEach(function(it,i){
+      if(i) h+='<div class="farr">&#8595;</div>';
+      if(it.t) h+=node(it);
+      if(it.chips) h+='<div class="fchips">'+it.chips.map(function(c){return '<span class="fchip '+(c.k||'')+(c.me?' me':'')+'">'+c.t+'</span>';}).join('')+'</div>';
+    });
+    return h+'</div>';
+  }
+
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  mermaid.initialize({ startOnLoad:false, theme:'base', themeVariables:{ fontFamily:'-apple-system, Segoe UI, Roboto, sans-serif', fontSize:'14px', lineColor:'#9aa7b6', edgeLabelBackground:'#ffffff' }, flowchart:{ nodeSpacing:42, rankSpacing:66, htmlLabels:true, useMaxWidth:false, curve:'basis', padding:16 } });
+
+  const host = document.getElementById('diagram');
+  const prev = document.getElementById('prev');
+  const next = document.getElementById('next');
+  const play = document.getElementById('play');
+  let pz=null, svgEl=null, cur=-1, timer=null, done=false;
+
+  const stepIndex={}; steps.forEach((s,i)=>{ stepIndex[s.id]=i; });
+
+  function findNode(id){
+    if(!svgEl) return null;
+    const nodes=[...svgEl.querySelectorAll('g.node')];
+    return nodes.find(e=>e.id && (e.id==='flowchart-'+id || e.id.startsWith('flowchart-'+id+'-') || e.id.indexOf('-'+id+'-')>-1)) || null;
+  }
+  function zoomToNode(n){ try{var sR=document.getElementById('stage').getBoundingClientRect();var nR=n.getBoundingClientRect();if(nR.width>4){var tz=pz.getZoom()*(sR.width*0.24/nR.width);pz.zoom(Math.max(0.2,Math.min(tz,12)));}}catch(e){} }
+  function focusNode(id){
+    svgEl && svgEl.querySelectorAll('g.node.focus, g.node.rel').forEach(function(e){e.classList.remove('focus');e.classList.remove('rel');});
+    if(!pz || !svgEl) return;
+    const n=findNode(id); if(!n) return;
+    n.classList.add('focus');
+    (REL[id]||[]).forEach(function(rid){ if(rid!==id){ var rn=findNode(rid); if(rn) rn.classList.add('rel'); } });
+    svgEl.classList.add('stepping');
+    if(reduce){
+      zoomToNode(n);
+      try{
+        const s=document.getElementById('stage').getBoundingClientRect();
+        const r=n.getBoundingClientRect();
+        const dx=(s.left+s.width/2)-(r.left+r.width/2);
+        const dy=(s.top+s.height/2)-(r.top+r.height/2);
+        const p=pz.getPan(); pz.pan({x:p.x+dx,y:p.y+dy});
+      }catch(e){}
+      return;
+    }
+    zoomToNode(n);
+    requestAnimationFrame(()=>{
+      try{
+        const s=document.getElementById('stage').getBoundingClientRect();
+        const r=n.getBoundingClientRect();
+        const dx=(s.left+s.width/2)-(r.left+r.width/2);
+        const dy=(s.top+s.height/2)-(r.top+r.height/2);
+        const p=pz.getPan(); pz.pan({x:p.x+dx,y:p.y+dy});
+      }catch(e){}
+    });
+  }
+  function show(i){
+    const target=Math.max(0,Math.min(steps.length-1,i));
+    if(target===cur && !done) return;
+    done=false;
+    cur=target;
+    const st=steps[cur];
+    document.getElementById('pstep').textContent='Step '+(cur+1)+' of '+steps.length;
+    document.getElementById('ptitle').textContent=st.title.replace(/^\d+\.\s*/,'');
+    var A=ARCH[st.id]||{};
+    if(A.t) document.getElementById('ptitle').textContent=A.t;
+    document.getElementById('pbody').innerHTML=(A.d?'<div class="archline">'+A.d+'</div>':'')+st.html+renderFlow(FLOWS[st.id])+renderBench(st.id);
+    prev.disabled = cur===0;
+    next.disabled = cur===steps.length-1;
+    focusNode(st.id);
+  }
+  function stopPlay(){
+    if(timer){clearInterval(timer);timer=null;}
+    play.innerHTML='<span aria-hidden="true">&#9654;</span>';
+    play.setAttribute('aria-pressed','false');
+    play.setAttribute('aria-label','Play walkthrough');
+    play.title='Play walkthrough';
+  }
+  function startPlay(){
+    if(timer){stopPlay();return;}
+    if(cur>=steps.length-1) show(0);
+    play.innerHTML='<span aria-hidden="true">&#10073;&#10073;</span>';
+    play.setAttribute('aria-pressed','true');
+    play.setAttribute('aria-label','Pause walkthrough');
+    play.title='Pause walkthrough';
+    if(cur<0) show(0);
+    timer=setInterval(()=>{
+      if(cur>=steps.length-1){
+        stopPlay();
+        done=true;
+        document.getElementById('pstep').textContent='Done';
+        document.getElementById('ptitle').textContent='Walkthrough complete';
+        document.getElementById('pbody').innerHTML='Walkthrough complete. Press Play to replay.';
+        return;
+      }
+      show(cur+1);
+    },4200);
+  }
+  function clearStepping(){ if(svgEl) svgEl.classList.remove('stepping'); }
+
+  next.onclick=()=>{stopPlay();show(cur+1);};
+  prev.onclick=()=>{stopPlay();show(cur-1);};
+  play.onclick=()=>{ startPlay(); };
+  document.getElementById('zfull').onclick=()=>{const c=document.getElementById('stage'); if(!document.fullscreenElement){c.requestFullscreen&&c.requestFullscreen();}else{document.exitFullscreen();}};
+
+  function setFullscreenLabel(){
+    const z=document.getElementById('zfull');
+    if(document.fullscreenElement){
+      z.setAttribute('aria-label','Exit fullscreen'); z.title='Exit fullscreen';
+      z.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5"/></svg>';
+    }else{
+      z.setAttribute('aria-label','Enter fullscreen'); z.title='Enter fullscreen';
+      z.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>';
+    }
+  }
+
+  document.addEventListener('keydown',(e)=>{
+    const tag=(e.target&&e.target.tagName)||'';
+    if(tag==='INPUT'||tag==='TEXTAREA') return;
+    const k=e.key;
+    if(k==='ArrowRight'||k==='PageDown'||k===' '){ e.preventDefault(); stopPlay(); show(cur+1); }
+    else if(k==='ArrowLeft'||k==='PageUp'){ e.preventDefault(); stopPlay(); show(cur-1); }
+    else if(k==='p'||k==='P'){ e.preventDefault(); startPlay(); }
+    else if(k==='f'||k==='F'){ e.preventDefault(); if(pz){stopPlay();clearStepping();pz.resize();pz.fit();pz.center();} }
+    else if(k==='+'||k==='='){ if(pz){stopPlay();pz.zoomIn();} }
+    else if(k==='-'||k==='_'){ if(pz){stopPlay();pz.zoomOut();} }
+    else if(k==='Escape'){ stopPlay(); if(document.fullscreenElement){document.exitFullscreen();} }
+  });
+
+  host.addEventListener('keydown',(e)=>{
+    if(!pz) return;
+    const k=e.key;
+    if(k==='ArrowRight'){ e.preventDefault(); pz.panBy({x:-80,y:0}); }
+    else if(k==='ArrowLeft'){ e.preventDefault(); pz.panBy({x:80,y:0}); }
+    else if(k==='ArrowUp'){ e.preventDefault(); pz.panBy({x:0,y:80}); }
+    else if(k==='ArrowDown'){ e.preventDefault(); pz.panBy({x:0,y:-80}); }
+    else if(k==='+'||k==='='){ e.preventDefault(); pz.zoomIn(); }
+    else if(k==='-'||k==='_'){ e.preventDefault(); pz.zoomOut(); }
+    else if(k==='0'){ e.preventDefault(); stopPlay(); clearStepping(); pz.resize(); pz.fit(); pz.center(); }
+  });
+
+  try{
+    const { svg } = await mermaid.render('oreAI', graph);
+    host.innerHTML=svg; svgEl=host.querySelector('svg');
+    svgEl.removeAttribute('style'); svgEl.setAttribute('width','100%'); svgEl.setAttribute('height','100%');
+
+    svgEl.setAttribute('role','img');
+    svgEl.setAttribute('aria-labelledby','oreAI-title oreAI-desc');
+    const NS='http://www.w3.org/2000/svg';
+    const titleEl=document.createElementNS(NS,'title'); titleEl.id='oreAI-title';
+    titleEl.textContent='ORE AI architecture map';
+    const descEl=document.createElementNS(NS,'desc'); descEl.id='oreAI-desc';
+    descEl.textContent='How a knowledge graph, RAG, agents, skills, handoff, evals, fine-tuning, and guardrails compose around a deterministic core that looks up cited rules, with a gated knowledge-ingestion loop and physician sign-off.';
+    svgEl.insertBefore(descEl, svgEl.firstChild);
+    svgEl.insertBefore(titleEl, svgEl.firstChild);
+
+    if(window.svgPanZoom){
+      pz=window.svgPanZoom(svgEl,{ zoomEnabled:true, panEnabled:true, controlIcons:false, fit:true, center:true, minZoom:0.06, maxZoom:18, zoomScaleSensitivity:0.4, onPan:clearStepping });
+      const fit=()=>{stopPlay();clearStepping();pz.resize();pz.fit();pz.center();};
+      document.getElementById('zin').onclick=()=>{stopPlay();pz.zoomIn();};
+      document.getElementById('zout').onclick=()=>{stopPlay();pz.zoomOut();};
+      document.getElementById('zfit').onclick=fit;
+      window.addEventListener('resize',()=>{ cur>-1 ? focusNode(steps[cur].id) : (pz.resize(),pz.fit(),pz.center()); });
+      document.addEventListener('fullscreenchange',()=>{ setFullscreenLabel(); setTimeout(()=>{ cur>-1 ? focusNode(steps[cur].id) : (pz.resize(),pz.fit(),pz.center()); },60); });
+    }
+
+    steps.forEach(s=>{ const n=findNode(s.id); if(n) n.classList.add('clickable'); });
+    svgEl.addEventListener('click',(e)=>{
+      const g=e.target.closest && e.target.closest('g.node');
+      if(!g||!g.id) return;
+      let id=g.id.replace(/^.*?flowchart-/,'');
+      id=id.replace(/-\d+$/,'');
+      if(stepIndex[id]!==undefined){ stopPlay(); show(stepIndex[id]); }
+    });
+  }catch(e){
+    host.innerHTML='<p style="padding:20px;color:#b91c1c">Diagram view unavailable, the step text still works. ('+(e&&e.message?e.message:e)+')</p>';
+  }
+
+  show(0);
+</script>
+</body>
+</html>
