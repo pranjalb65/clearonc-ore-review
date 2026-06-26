@@ -170,7 +170,7 @@
 IN["Data intake<br/><small>EHR, HIE, claims, upload</small>"]:::data
 PARSE["Structured extraction<br/><small>ER+, PR+, HER2 3+</small>"]:::llm
 TERM["Terminology normalize<br/><small>C50.912 to SNOMED</small>"]:::data
-BQ{"Driver biomarker?<br/><small>HER2 status</small>"}:::dec
+BQ{"Primary biomarker gate<br/><small>HER2 IHC</small>"}:::dec
 ISH["Equivocal to reflex test<br/><small>IHC 2+ to ISH</small>"]:::det
 EPI["Episode of Care<br/><small>triple-positive, Stage IIB</small>"]:::data
 CTAG{"Cancer type<br/><small>breast</small>"}:::dec
@@ -180,12 +180,12 @@ MBR["Subtype model<br/><small>breast HER2+</small>"]:::det
 SHR["Subtype model<br/><small>HR+, HER2-neg</small>"]:::det
 SHL["Subtype model<br/><small>HER2-low</small>"]:::det
 STN["Subtype model<br/><small>triple-negative</small>"]:::det
-IN --> PARSE --> TERM --> BQ
-BQ -- "IHC 3+" --> EPI
-BQ -- "IHC 2+" --> ISH --> EPI
-BQ -- "0/1+" --> EPI
+IN --> PARSE --> TERM --> EPI
+BQ -- "IHC 3+" --> SUB
+BQ -- "IHC 2+" --> ISH --> SUB
+BQ -- "0/1+" --> SUB
 EPI --> CTAG
-CTAG -- breast --> SUB
+CTAG -- breast --> BQ
 CTAG -- other --> MOTH
 SUB -- "HER2+" --> MBR
 SUB -- "HR+/HER2-neg" --> SHR
@@ -308,8 +308,8 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     { id:'IN', title:'1. Patient data in', html:'ClearOnc pulls from the EHR (SMART on FHIR, Xealth), an HIE feed, or claims, or accepts a manual upload (PreDoc), then normalizes them to one envelope. <div class="tagrow"><span class="t">touchpoint</span></div>' },
     { id:'PARSE', title:'2. Parse to typed facts', html:'An LLM extracts the record into typed, validated facts: <b>ER+, PR+, HER2 IHC 3+, cT2N1M0, ECOG 1, trastuzumab, paclitaxel</b>. High-stakes fields are cross-checked by a second model. <div class="tagrow"><span class="t">LLM edge</span></div>' },
     { id:'TERM', title:'3. Terminology', html:'The diagnosis code is normalized: <b>ICD-10-CM C50.912 to SNOMED 254837009</b> (malignant neoplasm of breast). ICD is preserved; SNOMED is what the engines reason over, so the case works for US and international partners.' },
-    { id:'BQ', title:'4. HER2 status (biomarker gating)', html:'<b>IHC 3+ is definitively HER2-positive</b>, no reflex ISH needed. IHC 1+ or 0 would not be actionable; <b>2+ triggers reflex ISH</b>. Only a confirmed positive opens a targeted pathway. <div class="tagrow"><span class="t ok">actionable</span></div>' },
     { id:'EPI', title:'5. Episode of Care', html:'The canonical, longitudinal record: triple-positive, Stage IIB, node-positive, with provenance and a confidence on every fact. Every engine reads from this.' },
+    { id:'BQ', title:'4. HER2 status (biomarker gating)', html:'<b>IHC 3+ is definitively HER2-positive</b>, no reflex ISH needed. IHC 1+ or 0 would not be actionable; <b>2+ triggers reflex ISH</b>. Only a confirmed positive opens a targeted pathway. <div class="tagrow"><span class="t ok">actionable</span></div>' },
     { id:'SUB', title:'6. Breast subtype routing', html:'The episode routes to a subtype model, each with its own pathways and AE profile: <b>HER2+ (this case)</b>, HR+/HER2-negative (endocrine + CDK4/6, Oncotype), HER2-low (T-DXd), triple-negative (chemo + IO, BRCA to PARP). This is why ORE is not one generic model.' },
     { id:'FACTORS', title:'7. Patient factors weighed', html:'Every consideration the plan and safety screen read: performance status (ECOG 1), cardiac and organ function, comorbidity burden, menopausal status, germline BRCA, intent and goals of care, drug interactions and allergies, patient preference, and prior therapy and line.' },
     { id:'ESC', title:'8. Escalate or de-escalate', html:'<b>Node-positive (N1) to dual HER2 blockade.</b> Node-negative small tumors de-escalate to paclitaxel + trastuzumab (APT). This patient is N1, so dual blockade is indicated. <div class="tagrow"><span class="t">decision</span></div>' },
@@ -353,7 +353,7 @@ classDef catch fill:#fce7f3,stroke:#db2777,color:#0e1622;`;
     IN:{t:'Data intake',d:'Data arrives by EHR pull (SMART on FHIR, Xealth), an HIE feed, claims, or manual upload, and is normalized to one record. The boundary is disease and product agnostic.'},
     PARSE:{t:'Structured extraction',d:'A language model turns the raw record into one typed clinical profile, with an evidence span recorded for every fact. One of the few places the model is used.'},
     TERM:{t:'Terminology normalization',d:'Source codes map to a standard vocabulary, so the same logic runs across coding systems and countries.'},
-    BQ:{t:'Biomarker actionability gate',d:'The engine checks whether a result is definitive enough to open a targeted pathway. If the gating result is absent, for example in claims-only data, it requests the result rather than assuming.'},
+    BQ:{t:'Primary biomarker gate',d:'The engine checks whether a result is definitive enough to open a targeted pathway. If the gating result is absent, for example in claims-only data, it requests the result rather than assuming.'},
     EPI:{t:'Episode of Care',d:'Every fact lands in one longitudinal record with its source and a confidence. Every engine reads from this.'},
     SUB:{t:'Subtype stratification',d:'The disease routes to a subtype-specific model, each with its own pathways and risk profile. ORE is not one generic model.'},
     FACTORS:{t:'Patient-factor intake',d:'The plan and the safety screen read the whole patient, not just the diagnosis.'},
